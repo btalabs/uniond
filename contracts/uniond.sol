@@ -7,6 +7,8 @@ contract Uniond {
 	address founder;
 
 	uint joiningFee;
+
+	uint subscriptionPeriod;
 	
 	uint issueSerial;
 	uint electionSerial;
@@ -17,7 +19,7 @@ contract Uniond {
 
 	mapping(address => bool) isMember;
 
-	mapping(address => Subscription) preMember;
+	mapping(address => Subscription) subscriptions;
 
 	mapping(uint => Issue) issues;
 
@@ -63,8 +65,8 @@ contract Uniond {
 	    memberAdminList.push(msg.sender);
 	    treasurerList.push(msg.sender);
 	    votes[msg.sender] = 1;
-	    issueSerial = 1;
-	    electionSerial = 1;
+	    issueSerial = 0;
+	    electionSerial = 0;
 	}
 
 	//memberAdmin modifier
@@ -98,7 +100,7 @@ contract Uniond {
   	}
 
   	function voteElection(uint election) returns (uint success){
-  		if(now < elections[election].deadline){
+  		if(now < elections[election].deadline && isMember[msg.sender]){
   		   electionVotes[election].push(msg.sender); 
   		   return 1;
   		}
@@ -144,14 +146,14 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= joiningFee){
-  			preMember[msg.sender] = Subscription(true, now);
+  			subscriptions[msg.sender] = Subscription(true, now);
   			return 1;
   		}
   		return 0;
   	}
 
   	function addMember(address member) onlyMemberAdmin returns (uint success){
-  		if(preMember[member].paid){
+  		if(subscriptions[member].paid){
   			members.push(member);
   			isMember[member] = true;
   			return 1;
@@ -159,19 +161,34 @@ contract Uniond {
   		return 0;
   	}
 
+  	function reviewMembers() onlyMemberAdmin returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - subscriptions[m].date > subscriptionPeriod){
+  				isMember[m] = true;
+  			} else {
+  				isMember[m] = false;
+  			}
+  		}
+  		return 1;
+  	}
+
   	//create new issue
-	function addIssue(string description, uint deadline) returns (uint success){
+	function addIssue(string description, uint deadline) onlyMember returns (uint success){
 	    issues[issueSerial] = Issue(msg.sender, description, 0, 0, deadline);
 	    issueSerial++;
 	    //credit each member with a vote
 	    for(var i=0; i < members.length; i++){
-	      votes[members[i]]++;
+	      if(isMember[members[i]]){
+	      	votes[members[i]]++;
+	      }
 	    }
 	    return 1;
 	}
 
     //vote on an issue
-  	function vote(uint issue, bool approve, uint amount) returns (uint success){
+    //q - should members who haven't paid subscription be able to vote with accumulated votes?
+  	function vote(uint issue, bool approve, uint amount) onlyMember returns (uint success){
 	    if(now < issues[issue].deadline && votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
 	      if(approve){
