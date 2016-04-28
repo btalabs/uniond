@@ -12,6 +12,7 @@ contract Uniond {
 	
 	uint issueSerial;
 	uint electionSerial;
+	uint paymentSerial;
 	
 	mapping(address => bool) treasurer;
 	
@@ -22,6 +23,8 @@ contract Uniond {
 	mapping(address => Subscription) subscriptions;
 
 	mapping(uint => Issue) issues;
+
+	mapping(uint => Payment) payments;
 
 	mapping(uint => Election) elections;
 	
@@ -34,6 +37,14 @@ contract Uniond {
 	address[] memberAdminList;
 
 	address[] treasurerList;
+
+	struct Payment{
+		address spender;
+		address recipient;
+		string reason;
+		uint amount
+		uint date;
+	}
 
 	struct Subscription {
 		bool paid;
@@ -67,6 +78,7 @@ contract Uniond {
 	    votes[msg.sender] = 1;
 	    issueSerial = 0;
 	    electionSerial = 0;
+	    paymentSerial = 0;
 	}
 
 	//memberAdmin modifier
@@ -153,7 +165,7 @@ contract Uniond {
   	}
 
   	function addMember(address member) onlyMemberAdmin returns (uint success){
-  		if(subscriptions[member].paid){
+  		if(subscriptions[member].paid && (now - subscriptions[member].date > subscriptionPeriod)){
   			members.push(member);
   			isMember[member] = true;
   			return 1;
@@ -171,6 +183,16 @@ contract Uniond {
   			}
   		}
   		return 1;
+  	}
+
+  	function spend(address recipient, uint amount, string reason) onlyTreasurer returns (uint success){
+		if (this.balance >= amount){
+			recipient.send(amount);
+			payments[paymentSerial] =  Payment(msg.sender, recipient, reason, amount, now);
+			paymentSerial++;
+			return 1;
+		}
+		return 0;
   	}
 
   	//create new issue
