@@ -17,6 +17,8 @@ contract Uniond {
 
 	mapping(address => bool) isMember;
 
+	mapping(address => Subscription) preMember;
+
 	mapping(uint => Issue) issues;
 
 	mapping(uint => Election) elections;
@@ -30,6 +32,11 @@ contract Uniond {
 	address[] memberAdminList;
 
 	address[] treasurerList;
+
+	struct Subscription {
+		bool paid;
+		uint date;
+	}
 
 	struct Election {
 		address owner;
@@ -135,6 +142,23 @@ contract Uniond {
   		}
   	}
 
+  	function applyMember() returns (uint success){
+  		if(msg.value >= joiningFee){
+  			preMember[msg.sender] = Subscription(true, now);
+  			return 1;
+  		}
+  		return 0;
+  	}
+
+  	function addMember(address member) onlyMemberAdmin returns (uint success){
+  		if(preMember[member].paid){
+  			members.push(member);
+  			isMember[member] = true;
+  			return 1;
+  		}
+  		return 0;
+  	}
+
   	//create new issue
 	function addIssue(string description, uint deadline) returns (uint success){
 	    issues[issueSerial] = Issue(msg.sender, description, 0, 0, deadline);
@@ -200,5 +224,9 @@ contract Uniond {
 
   	function getFounder() returns (address owner){
     	owner = founder;
-  	}	
+  	}
+
+  	function getJoiningFee() returns (uint fee){
+  		fee = joiningFee;
+  	}
 }
