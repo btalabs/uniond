@@ -1,6 +1,9 @@
 //License: GPL
 //Author: @hugooconnor
 //Thanks to @XertroV for @voteFlux issue based direct democracy
+//TODO
+// add getPayment methods
+// add getMember methods
 
 contract Uniond {
 	
@@ -42,7 +45,7 @@ contract Uniond {
 		address spender;
 		address recipient;
 		string reason;
-		uint amount
+		uint amount;
 		uint date;
 	}
 
