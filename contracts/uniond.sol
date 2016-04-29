@@ -21,6 +21,10 @@ contract Uniond {
 	mapping(address => bool) public memberAdmin;
 	mapping(address => bool) public isMember;
 
+	address[] public members;
+	address[] public memberAdminList;
+	address[] public treasurerList;
+
 	mapping(address => Subscription) public subscriptions;
 	mapping(uint => Issue) public issues;
 	mapping(uint => Payment) public payments;
@@ -28,10 +32,6 @@ contract Uniond {
 	
 	mapping(uint => address[]) public electionVotes;
 	mapping(address => uint) public votes;
-
-	address[] public members;
-	address[] public memberAdminList;
-	address[] public treasurerList;
 
 	struct Payment{
 		address spender;
@@ -132,22 +132,14 @@ contract Uniond {
   		}
   	}
 
-  	function getElectionNominee(uint election) returns (address nominee){
-  		return elections[election].nominee;
-  	}
-
-  	function getElectionRole(uint election) returns (uint role){
-  		return elections[election].role;
-  	}
-
   	function addCandidate(uint election) returns (uint success){
   		if(callElection(election) == 1){
-  			address nominee = getElectionNominee(election);
-  			if(getElectionRole(election) == 1){
+  			address nominee = elections[election].nominee;
+  			if(elections[election].role == 1){
   				//add to treasurer role
 			    treasurer[nominee] = true;
 			    treasurerList.push(nominee);
-  			} else if (getElectionNominee(election) == 2){
+  			} else if (elections[election].role == 2){
   			   	//add to memberAdmin role
   			   	memberAdmin[nominee] = true;
 		   	   	memberAdminList.push(nominee);
