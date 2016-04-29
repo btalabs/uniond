@@ -10,39 +10,28 @@
 
 contract Uniond {
 	
-	address founder;
-
-	uint joiningFee;
-
-	uint subscriptionPeriod;
+	address public founder;
+	uint public joiningFee;
+	uint public subscriptionPeriod;
+	uint public issueSerial;
+	uint public electionSerial;
+	uint public paymentSerial;
 	
-	uint issueSerial;
-	uint electionSerial;
-	uint paymentSerial;
+	mapping(address => bool) public treasurer;
+	mapping(address => bool) public memberAdmin;
+	mapping(address => bool) public isMember;
+
+	mapping(address => Subscription) public subscriptions;
+	mapping(uint => Issue) public issues;
+	mapping(uint => Payment) public payments;
+	mapping(uint => Election) public elections;
 	
-	mapping(address => bool) treasurer;
-	
-	mapping(address => bool) memberAdmin;
+	mapping(uint => address[]) public electionVotes;
+	mapping(address => uint) public votes;
 
-	mapping(address => bool) isMember;
-
-	mapping(address => Subscription) subscriptions;
-
-	mapping(uint => Issue) issues;
-
-	mapping(uint => Payment) payments;
-
-	mapping(uint => Election) elections;
-	
-	mapping(uint => address[]) electionVotes;
-
-	mapping(address => uint) votes;
-
-	address[] members;
-
-	address[] memberAdminList;
-
-	address[] treasurerList;
+	address[] public members;
+	address[] public memberAdminList;
+	address[] public treasurerList;
 
 	struct Payment{
 		address spender;
@@ -88,7 +77,6 @@ contract Uniond {
 	    paymentSerial = 0;
 	}
 
-	//memberAdmin modifier
 	modifier onlyMemberAdmin {
 	    if (!memberAdmin[msg.sender]) {
 	      throw;
@@ -204,12 +192,18 @@ contract Uniond {
 
   	function spend(address recipient, uint amount, string reason) onlyTreasurer returns (uint success){
 		if (this.balance >= amount){
+			//this is the place to 'clip the ticket'
 			recipient.send(amount);
 			payments[paymentSerial] =  Payment(msg.sender, recipient, reason, amount, now);
 			paymentSerial++;
 			return 1;
 		}
 		return 0;
+  	}
+
+  	function setJoiningFee(uint fee) onlyTreasurer returns (uint success){
+  		joiningFee = fee;
+  		return 1;
   	}
 
   	//create new issue
@@ -251,39 +245,9 @@ contract Uniond {
 	    return 0;
 	}
 
-  	//get balance of votes
-	function getBalance() returns (uint balance){
-	    balance = votes[msg.sender];
-	}
-
-  	//get current issue
-	function getIssue(uint serial) returns
-	    (string description, uint approve, uint disapprove, uint deadline){
-	    description = issues[serial].description;
-	    approve = issues[serial].approve;
-	    disapprove = issues[serial].disapprove;
-	    deadline = issues[serial].deadline;
-	}
-
 	//get membership count
 	function getMemberCount() returns (uint count){
 	    count = members.length;
 	}
 
-	//get member at position i
-	function getMember(uint index) returns (address member){
-	    member = members[index];
-	}
-
-  	function getIssueCount() returns (uint count){
-    	count = issueSerial;
-  	}
-
-  	function getFounder() returns (address owner){
-    	owner = founder;
-  	}
-
-  	function getJoiningFee() returns (uint fee){
-  		fee = joiningFee;
-  	}
 }
