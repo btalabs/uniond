@@ -1,9 +1,6 @@
 //License: GPL
 //Author: @hugooconnor
 //Thanks to @XertroV for @voteFlux issue based direct democracy
-//TODO
-// add methods to un-elect
-// add method to get current funds on hand
 
 contract Uniond {
 	
@@ -98,6 +95,7 @@ contract Uniond {
 	    _
 	}
 
+	//positions; 1 == treasurer, 2 == memberAdmin, 3 == revoke treasurer, 4 == revoke memberAdmin
   	function addElection(address nominee, uint position) returns (uint success){
   	    uint duration = 60*60*24*7*4;
   		uint deadline = now + duration;
@@ -147,8 +145,14 @@ contract Uniond {
 		   	   	elections[election].executed = true;
   			} else if (elections[election].role == 3) {
   				//revoke treasurer
+  				treasurer[nominee] = false;
+  				//delete from treasurerList
+  				elections[election].executed = true;
   			} else if (elections[election].role == 4) {
   				//revoke memberAdmin
+  				memberAdmin[nominee] = false;
+  				//delete from memberAdminList?
+  				elections[election].executed = true;
   			} else {
   				return 0;
   			}
@@ -242,7 +246,7 @@ contract Uniond {
 	}
 
   	//transfer votes
-  	//should this exist? ppl can buy votes?
+  	//should this exist? what will stop people from selling votes?
 	function transfer(address reciever, uint amount) returns (uint success){
 	    if(votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
