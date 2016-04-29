@@ -4,6 +4,9 @@
 //TODO
 // add getPayment methods
 // add getMember methods
+// add getElection methods
+// add methods to un-elect
+// add method to get current funds on hand
 
 contract Uniond {
 	
@@ -68,6 +71,7 @@ contract Uniond {
 	    uint approve;
 	    uint disapprove;
 	    uint deadline;
+	    //uint budget;
 	}
 
  	function Uniond(){
@@ -227,6 +231,7 @@ contract Uniond {
 	}
 
   	//transfer votes
+  	//should this exist? ppl can buy votes?
 	function transfer(address reciever, uint amount) returns (uint success){
 	    if(votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
