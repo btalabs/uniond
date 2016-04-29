@@ -120,8 +120,18 @@ contract Uniond {
 
   	function voteElection(uint election) returns (uint success){
   		if(now < elections[election].deadline && isMember[msg.sender]){
-  		   electionVotes[election].push(msg.sender); 
-  		   return 1;
+  		   //need to stop people from voting twice - probably a better way to do this...
+  		   bool hasVoted = false;
+  		   for(var i=0; i < electionVotes[election].length; i++){
+  		   		if(electionVotes[election][i] == msg.sender){
+  		   			hasVoted = true;
+  		   			break;
+  		   		}
+  		   }
+  		   if(!hasVoted){
+  		   		electionVotes[election].push(msg.sender); 
+  		   		return 1;
+  		   }
   		}
   		return 0;
   	}
