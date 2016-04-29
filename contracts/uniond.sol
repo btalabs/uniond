@@ -2,9 +2,6 @@
 //Author: @hugooconnor
 //Thanks to @XertroV for @voteFlux issue based direct democracy
 //TODO
-// add getPayment methods
-// add getMember methods
-// add getElection methods
 // add methods to un-elect
 // add method to get current funds on hand
 
@@ -13,6 +10,7 @@ contract Uniond {
 	address public founder;
 	uint public joiningFee;
 	uint public subscriptionPeriod;
+
 	uint public issueSerial;
 	uint public electionSerial;
 	uint public paymentSerial;
@@ -52,6 +50,7 @@ contract Uniond {
 	    //1 == treasurer, 2 == memberAdmin
 	    uint role;
 	    uint deadline;
+	    bool executed;
 	}
 
 	struct Issue {
@@ -63,6 +62,7 @@ contract Uniond {
 	    //uint budget;
 	}
 
+	//constructor
  	function Uniond(){
 	    founder = msg.sender;
 	    memberAdmin[msg.sender] = true;
@@ -101,7 +101,7 @@ contract Uniond {
   	function addElection(address nominee, uint position) returns (uint success){
   	    uint duration = 60*60*24*7*4;
   		uint deadline = now + duration;
-  		elections[electionSerial] = Election(msg.sender, nominee, position, deadline);
+  		elections[electionSerial] = Election(msg.sender, nominee, position, deadline, false);
   		electionSerial++;
   		return 1;
   	}
@@ -132,17 +132,23 @@ contract Uniond {
   		}
   	}
 
-  	function addCandidate(uint election) returns (uint success){
-  		if(callElection(election) == 1){
+  	function executeMandate(uint election) returns (uint success){
+  		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
   			if(elections[election].role == 1){
-  				//add to treasurer role
+  				//add treasurer
 			    treasurer[nominee] = true;
 			    treasurerList.push(nominee);
+			    elections[election].executed = true;
   			} else if (elections[election].role == 2){
-  			   	//add to memberAdmin role
+  			   	//add memberAdmin 
   			   	memberAdmin[nominee] = true;
 		   	   	memberAdminList.push(nominee);
+		   	   	elections[election].executed = true;
+  			} else if (elections[election].role == 3) {
+  				//revoke treasurer
+  			} else if (elections[election].role == 4) {
+  				//revoke memberAdmin
   			} else {
   				return 0;
   			}
@@ -196,6 +202,15 @@ contract Uniond {
   	function setJoiningFee(uint fee) onlyTreasurer returns (uint success){
   		joiningFee = fee;
   		return 1;
+  	}
+
+  	function setSubscriptionPeriod(uint period) onlyTreasurer returns (uint success){
+  		subscriptionPeriod = period;
+  		return 1;
+  	}
+
+  	function unionBalance() returns (uint balance) {
+  		return this.balance;
   	}
 
   	//create new issue
