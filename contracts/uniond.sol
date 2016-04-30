@@ -154,7 +154,7 @@ contract Uniond {
     }
 */
 
-	//positions; 1 == treasurer, 2 == memberAdmin, 3 == revoke treasurer, 4 == revoke memberAdmin
+	
   	function addElection(address nominee, uint position, bool appoint) returns (uint success){
   	    uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
@@ -164,7 +164,7 @@ contract Uniond {
   	}
 
   	function voteElection(uint election) returns (uint success){
-  		if(now < elections[election].deadline && isMember[msg.sender]){
+  		if(now < elections[election].deadline && member[msg.sender].isMember){
   		   //need to stop people from voting twice - probably a better way to do this...
   		   bool hasVoted = false;
   		   for(var i=0; i < electionVotes[election].length; i++){
@@ -174,7 +174,8 @@ contract Uniond {
   		   		}
   		   }
   		   if(!hasVoted){
-  		   		electionVotes[election].push(msg.sender); 
+  		   		electionVotes[election].push(msg.sender);
+  		   		elections[election].electionVotes++;
   		   		return 1;
   		   }
   		}
@@ -189,28 +190,34 @@ contract Uniond {
   		}
   	}
 
+  	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 
+	// 4 == revoke treasurer, 5 == revoke memberAdmin, 6 == revoke Chair
   	function executeMandate(uint election) returns (uint success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
   			if(elections[election].role == 1){
   				//add treasurer
-			    treasurer[nominee] = true;
-			    treasurerList.push(nominee);
+			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
-  			   	memberAdmin[nominee] = true;
-		   	   	memberAdminList.push(nominee);
+  			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
   			} else if (elections[election].role == 3) {
-  				//revoke treasurer
-  				treasurer[nominee] = false;
-  				//delete from treasurerList
+  				//add chair
+  				member[nominee].isChair = true;
   				elections[election].executed = true;
   			} else if (elections[election].role == 4) {
+  				//revoke treasurer
+  				member[nominee].isTreasurer = false;
+  				elections[election].executed = true;
+  			} else if (elections[election].role == 5) {
   				//revoke memberAdmin
-  				memberAdmin[nominee] = false;
-  				//delete from memberAdminList?
+  				member[nominee].isMemberAdmin = false;
+  				elections[election].executed = true;
+  			} else if (elections[election].role == 6) {
+  				//revoke chair
+  				member[nominee].isChair = false;
   				elections[election].executed = true;
   			} else {
   				return 0;
@@ -223,17 +230,17 @@ contract Uniond {
   	}
 
   	function applyMember() returns (uint success){
-  		if(msg.value >= joiningFee){
-  			subscriptions[msg.sender] = Subscription(true, now);
+  		if(msg.value >= constitution.memberRules.joiningFee){
+  			member[msg.sender] = Member(now, 0, false, false, false, false, false);
   			return 1;
   		}
   		return 0;
   	}
 
-  	function addMember(address member) onlyMemberAdmin returns (uint success){
-  		if(subscriptions[member].paid && (now - subscriptions[member].date > subscriptionPeriod)){
-  			members.push(member);
-  			isMember[member] = true;
+  	function addMember(address newMember) onlyMemberAdmin returns (uint success){
+  		if(member[newMember].joinDate < now){
+  			members.push(newMember);
+  			member[newMember].isMember = true;
   			return 1;
   		}
   		return 0;
