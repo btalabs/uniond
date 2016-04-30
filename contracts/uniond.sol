@@ -28,6 +28,7 @@ contract Uniond {
 	mapping(address => uint) public tokens;
 
 	struct Spend{
+		address recipient;
 		uint amount;
 		address[] signatures;
 		bool spent;
@@ -347,6 +348,28 @@ contract Uniond {
 	//get membership count
 	function getMemberCount() returns (uint count){
 	    count = members.length;
+	}
+
+	function newSpend(uint amount, address recipient) onlyTreasurer returns (uint spendSerial){
+		address[] memory signatures;
+		spends[spendSerial] = Spend(recipient, amount, signatures, false);
+	}
+
+	function signSpend(uint spend) onlyTreasurer returns (uint success){
+		//check hasn't already signed;
+		bool hasSigned = false;
+		for(var i=0; i < spends[spend].signatures.length; i++){
+			if(msg.sender == spends[spend].signatures[i]){
+				hasSigned = true;
+				break;
+			}
+		}
+		if(!hasSigned){
+		 	spends[spend].signatures.push(msg.sender);
+		 	return 1;
+		} else {
+			return 0;
+		}
 	}
 
 }
