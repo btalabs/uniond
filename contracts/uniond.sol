@@ -33,6 +33,7 @@ contract Uniond {
 		address owner;
 	    address nominee;
 	    bool appoint;
+	    uint role;
 	 	uint deadline;
 	    bool executed;
 	    uint totalVoters;  //TODO set after deadline is passed
@@ -41,6 +42,7 @@ contract Uniond {
 	struct Issue {
 	    address owner;
 	    string description;
+	    bool visible;
 	    uint date;
 	    uint approve;
 	    uint disapprove;
@@ -58,10 +60,12 @@ contract Uniond {
 	    bool isChair;
 	}
 
+/*
 	struct SpendRules {
         uint threshold; // number of signature required for spending more than 10 eth
         uint signatureThreshold; //
     }
+*/
 
     struct GeneralRules {
         uint nbrTreasurer;
@@ -93,7 +97,7 @@ contract Uniond {
 		ElectionRules electionRules;
 		MemberRules memberRules;
 		AdminStipend adminStipend;
-        SpendRules[] spendRules;
+        //SpendRules[] spendRules;
       }
 
 	//constructor
@@ -108,31 +112,39 @@ contract Uniond {
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
-	    				AdminStipend(1, 1, 1, 1),
-	    				spendRules.push(SpendRule(1,1)));
+	    				AdminStipend(1, 1, 1, 1)
+	    				);
 	}
 
 	modifier onlyMemberAdmin {
-	    if (!memberAdmin[msg.sender]) {
+	    if (!member[msg.sender].isMemberAdmin) {
 	      throw;
 	    }
 	    _
 	}
 
 	modifier onlyTreasurer {
-	    if (!memberAdmin[msg.sender]) {
+	    if (!member[msg.sender].isTreasurer) {
 	      throw;
 	    }
 	    _
 	}
 
 	modifier onlyMember {
-	    if (!isMember[msg.sender]) {
+	    if (!member[msg.sender].isMember) {
 	      throw;
 	    }
 	    _
 	}
 
+	modifier onlyChair {
+	    if (!member[msg.sender].isChair) {
+	      throw;
+	    }
+	    _
+	}
+
+/*
 	modifier twoThirdMajority {
 	// sample test
 	    if (!election.result>=(0.666*totalVoters)+1){
@@ -140,12 +152,13 @@ contract Uniond {
 	    }
 	    _
     }
+*/
 
 	//positions; 1 == treasurer, 2 == memberAdmin, 3 == revoke treasurer, 4 == revoke memberAdmin
-  	function addElection(address nominee, uint position) returns (uint success){
-  	    uint duration = 60*60*24*7*4;
+  	function addElection(address nominee, uint position, bool appoint) returns (uint success){
+  	    uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
-  		elections[electionSerial] = Election(msg.sender, nominee, position, deadline, false);
+  		elections[electionSerial] = Election(msg.sender, nominee, appoint, position, deadline, false, 0);
   		electionSerial++;
   		return 1;
   	}
