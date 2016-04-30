@@ -4,17 +4,15 @@
 
 contract Uniond {
 	
-	address public founder;
+	Constitution constitution;
 
 	uint public issueSerial;
 	uint public electionSerial;
 	uint public paymentSerial;
 	
 	mapping(address => Member) public member;
-
 	address[] public members;
 
-//	mapping(address => Subscription) public subscriptions;
 	mapping(uint => Issue) public issues;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
@@ -31,47 +29,11 @@ contract Uniond {
 		uint date;
 	}
 
-	  struct Constitution {
-
-	    struct generalRules {
-            uint nbrTreasurer;
-            uint nbrSecretary;
-            uint nbrRepresentative;
-            uint nbrAdmin;
-        }
-
-        struct electionRules {
-            uint duration;
-            uint winThreshold;
-            uint mandateDuration;
-        }
-
-        struct memberRules {
-            uint joiningFee;
-            uint membershipDuration;
-        }
-
-        struct adminStipend {
-            uint stipendTreasurer;
-            uint stipendSecretary;
-            uint stipendRepresentative;
-            uint stipendAdmin;
-        }
-
-        spendRules[] rules
-
-      }
-
-    struct spendRules {
-             uint threshold // number of signature required for spending more than 10 eth
-             uint signatureThreshold //
-         }
-
 	struct Election {
 		address owner;
 	    address nominee;
-	    uint role;
-	    uint deadline;
+	    bool appoint;
+	 	uint deadline;
 	    bool executed;
 	    uint totalVoters;  //TODO set after deadline is passed
 	}
@@ -89,25 +51,65 @@ contract Uniond {
 	struct Member {
 	    uint joinDate;
 	    uint renewalDate;
-	    bool    isMember;
-	    uint    status;
+	    bool isMember;
+	    bool isMemberAdmin;
+	    bool isTreasurer;
+	    bool isRepresentative;
+	    bool isChair;
 	}
 
-    uint memberAdmin,treasurer,representative;
+	struct SpendRules {
+        uint threshold; // number of signature required for spending more than 10 eth
+        uint signatureThreshold; //
+    }
+
+    struct GeneralRules {
+        uint nbrTreasurer;
+        uint nbrSecretary;
+        uint nbrRepresentative;
+        uint nbrAdmin;
+    }
+
+	struct ElectionRules {
+        uint duration;
+        uint winThreshold;
+        uint mandateDuration;
+    }
+
+  	struct MemberRules {
+    	uint joiningFee;
+    	uint membershipDuration;
+   	}	
+
+    struct AdminStipend {
+        uint stipendTreasurer;
+        uint stipendSecretary;
+        uint stipendRepresentative;
+        uint stipendAdmin;
+    }
+
+	struct Constitution {
+		GeneralRules generalRules;
+		ElectionRules electionRules;
+		MemberRules memberRules;
+		AdminStipend adminStipend;
+        SpendRules[] spendRules;
+      }
 
 	//constructor
  	function Uniond(){
-	    founder = msg.sender;
-	    memberAdmin[msg.sender] = true;
-	    treasurer[msg.sender] = true;
-	    isMember[msg.sender] = true;
+	    member[msg.sender] = Member(now, 0, true, true, true, true, true);
 	    members.push(msg.sender);
-	    memberAdminList.push(msg.sender);
-	    treasurerList.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
 	    electionSerial = 0;
 	    paymentSerial = 0;
+	    constitution = Constitution(
+	    				GeneralRules(1, 1, 1, 1),
+	    				ElectionRules(1, 1, 1),
+	    				MemberRules(1, 1),
+	    				AdminStipend(1, 1, 1, 1),
+	    				spendRules.push(SpendRule(1,1)));
 	}
 
 	modifier onlyMemberAdmin {
