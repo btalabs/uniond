@@ -44,7 +44,6 @@ contract Uniond {
 	struct Election {
 		address owner;
 	    address nominee;
-	    //1 == treasurer, 2 == memberAdmin
 	    uint role;
 	    uint deadline;
 	    bool executed;
@@ -56,7 +55,7 @@ contract Uniond {
 	    uint approve;
 	    uint disapprove;
 	    uint deadline;
-	    //uint budget;
+	    //uint budget; ?
 	}
 
 	//constructor
