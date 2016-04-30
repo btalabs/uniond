@@ -9,17 +9,29 @@ contract Uniond {
 	uint public issueSerial;
 	uint public electionSerial;
 	uint public paymentSerial;
+	uint public spendSerial;
+
+	uint public treasurerCount;
+	uint public chairCount;
+	uint public memberAdminCount;
 	
 	mapping(address => Member) public member;
 	address[] public members;
 
 	mapping(uint => Issue) public issues;
+	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
 	
 	mapping(uint => address[]) public electionVotes;
 	mapping(address => uint) public votes;
 	mapping(address => uint) public tokens;
+
+	struct Spend{
+		uint amount;
+		address[] signatures;
+		bool spent;
+	}
 
 	struct Payment{
 		address spender;
@@ -108,6 +120,7 @@ contract Uniond {
 	    issueSerial = 0;
 	    electionSerial = 0;
 	    paymentSerial = 0;
+	    spendSerial = 0;
 	    constitution = Constitution(
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
@@ -199,26 +212,32 @@ contract Uniond {
   				//add treasurer
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
+			    treasurerCount++;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
+		   	   	memberAdminCount++;
   			} else if (elections[election].role == 3) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
+  				chairCount++;
   			} else if (elections[election].role == 4) {
   				//revoke treasurer
   				member[nominee].isTreasurer = false;
   				elections[election].executed = true;
+  				treasurerCount--;
   			} else if (elections[election].role == 5) {
   				//revoke memberAdmin
   				member[nominee].isMemberAdmin = false;
   				elections[election].executed = true;
+  				memberAdminCount--;
   			} else if (elections[election].role == 6) {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
+  				chairCount--;
   			} else {
   				return 0;
   			}
