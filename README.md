@@ -39,3 +39,25 @@ Members who have the power to speak on behalf of the UnionD.
 ##Chair(s)
 
 Members who have the power to set the agenda of issues.
+
+#Processes
+
+##Constitution (settings)
+
+The parameters of the UnionD. Changeable by super-majority vote.
+
+##Issues
+
+Any member can create an issue. Issues are determined by Flux mechanics, developed by @Xetrov. Eg. If there are 10 issues, you get 10 votes, you can vote 10 times on the issue you care most about, or transfer your votes to another party.
+
+##Spending
+
+Treasurer(s) can spend funds belonging to the UnionD. If there are multiple treasurers, spending is by a super-majority (multi-sig).
+
+##Elections
+
+Any member can create an election. Elections are for special roles. Default setting is by a simple majority (50% + 1 vote).
+
+##Commerce
+
+UnionD issues its own currency. Currency is issued to members each time they renew their subscription. This fiat currency can be used to purchase goods and services from anyone who recognises the value of the particular UnionD.
