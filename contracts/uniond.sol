@@ -1,32 +1,27 @@
 //License: GPL
-//Author: @hugooconnor
+//Author: @hugooconnor @arkhh
 //Thanks to @XertroV for @voteFlux issue based direct democracy
 
 contract Uniond {
 	
 	address public founder;
-	uint public joiningFee;
-	uint public subscriptionPeriod;
 
 	uint public issueSerial;
 	uint public electionSerial;
 	uint public paymentSerial;
 	
-	mapping(address => bool) public treasurer;
-	mapping(address => bool) public memberAdmin;
-	mapping(address => bool) public isMember;
+	mapping(address => Member) public member;
 
 	address[] public members;
-	address[] public memberAdminList;
-	address[] public treasurerList;
 
-	mapping(address => Subscription) public subscriptions;
+//	mapping(address => Subscription) public subscriptions;
 	mapping(uint => Issue) public issues;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
 	
 	mapping(uint => address[]) public electionVotes;
 	mapping(address => uint) public votes;
+	mapping(address => uint) public tokens;
 
 	struct Payment{
 		address spender;
@@ -36,10 +31,41 @@ contract Uniond {
 		uint date;
 	}
 
-	struct Subscription {
-		bool paid;
-		uint date;
-	}
+	  struct Constitution {
+
+	    struct generalRules {
+            uint nbrTreasurer;
+            uint nbrSecretary;
+            uint nbrRepresentative;
+            uint nbrAdmin;
+        }
+
+        struct electionRules {
+            uint duration;
+            uint winThreshold;
+            uint mandateDuration;
+        }
+
+        struct memberRules {
+            uint joiningFee;
+            uint membershipDuration;
+        }
+
+        struct adminStipend {
+            uint stipendTreasurer;
+            uint stipendSecretary;
+            uint stipendRepresentative;
+            uint stipendAdmin;
+        }
+
+        spendRules[] rules
+
+      }
+
+    struct spendRules {
+             uint threshold // number of signature required for spending more than 10 eth
+             uint signatureThreshold //
+         }
 
 	struct Election {
 		address owner;
@@ -47,6 +73,7 @@ contract Uniond {
 	    uint role;
 	    uint deadline;
 	    bool executed;
+	    uint totalVoters;  //TODO set after deadline is passed
 	}
 
 	struct Issue {
@@ -55,8 +82,17 @@ contract Uniond {
 	    uint approve;
 	    uint disapprove;
 	    uint deadline;
-	    //uint budget; ?
+	    uint budget;
 	}
+
+	struct Member {
+	    uint joinDate;
+	    uint renewalDate;
+	    bool    isMember;
+	    uint    status;
+	}
+
+    uint memberAdmin,treasurer,representative;
 
 	//constructor
  	function Uniond(){
@@ -94,6 +130,14 @@ contract Uniond {
 	    _
 	}
 
+	modifier twoThirdMajority {
+	// sample test
+	    if (!election.result>=(0.666*totalVoters)+1){
+          throw;
+	    }
+	    _
+    }
+
 	//positions; 1 == treasurer, 2 == memberAdmin, 3 == revoke treasurer, 4 == revoke memberAdmin
   	function addElection(address nominee, uint position) returns (uint success){
   	    uint duration = 60*60*24*7*4;
@@ -121,7 +165,7 @@ contract Uniond {
   		return 0;
   	}
 
-  	function callElection(uint election) returns (uint result){
+  	function callElection(uint election) returns (uint result){ // rename to triggerElection ?
   		if(now > elections[election].deadline && electionVotes[election].length > (members.length / 2)){
   			return 1;
   		} else {
