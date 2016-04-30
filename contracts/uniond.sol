@@ -79,6 +79,7 @@ contract Uniond {
 	struct Issue {
 	    address owner;
 	    string description;
+	    uint date;
 	    uint approve;
 	    uint disapprove;
 	    uint deadline;
@@ -103,7 +104,7 @@ contract Uniond {
 	    members.push(msg.sender);
 	    memberAdminList.push(msg.sender);
 	    treasurerList.push(msg.sender);
-	    votes[msg.sender] = 1;
+	    votes[msg.sender] = 0;
 	    issueSerial = 0;
 	    electionSerial = 0;
 	    paymentSerial = 0;
