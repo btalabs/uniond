@@ -82,7 +82,7 @@ contract Uniond {
 
   	struct MemberRules {
     	uint joiningFee;
-    	uint membershipDuration;
+    	uint subscriptionPeriod;
    	}	
 
     struct AdminStipend {
@@ -175,7 +175,7 @@ contract Uniond {
   		   }
   		   if(!hasVoted){
   		   		electionVotes[election].push(msg.sender);
-  		   		elections[election].electionVotes++;
+  		   		elections[election].totalVoters++;
   		   		return 1;
   		   }
   		}
@@ -241,6 +241,7 @@ contract Uniond {
   		if(member[newMember].joinDate < now){
   			members.push(newMember);
   			member[newMember].isMember = true;
+  			member[newMember].renewalDate = now;
   			return 1;
   		}
   		return 0;
@@ -249,15 +250,17 @@ contract Uniond {
   	function reviewMembers() onlyMemberAdmin returns (uint success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
-  			if (now - subscriptions[m].date > subscriptionPeriod){
-  				isMember[m] = true;
+  			if (now - member[m].renewalDate > constitution.memberRules.subscriptionPeriod){
+  				member[m].isMember = true;
   			} else {
-  				isMember[m] = false;
+  				member[m].isMember = false;
+  				delete members[i];
   			}
   		}
   		return 1;
   	}
-
+  	
+  	//todo -- add multisig on spending
   	function spend(address recipient, uint amount, string reason) onlyTreasurer returns (uint success){
 		if (this.balance >= amount){
 			//this is the place to 'clip the ticket'
@@ -270,12 +273,12 @@ contract Uniond {
   	}
 
   	function setJoiningFee(uint fee) onlyTreasurer returns (uint success){
-  		joiningFee = fee;
+  		constitution.memberRules.joiningFee = fee;
   		return 1;
   	}
 
   	function setSubscriptionPeriod(uint period) onlyTreasurer returns (uint success){
-  		subscriptionPeriod = period;
+  		constitution.memberRules.subscriptionPeriod = period;
   		return 1;
   	}
 
@@ -284,12 +287,12 @@ contract Uniond {
   	}
 
   	//create new issue
-	function addIssue(string description, uint deadline) onlyMember returns (uint success){
-	    issues[issueSerial] = Issue(msg.sender, description, 0, 0, deadline);
+	function addIssue(string description, uint deadline, uint budget) onlyMember returns (uint success){
+	    issues[issueSerial] = Issue(msg.sender, description, false, now, 0, 0, deadline, budget);
 	    issueSerial++;
 	    //credit each member with a vote
 	    for(var i=0; i < members.length; i++){
-	      if(isMember[members[i]]){
+	      if(member[members[i]].isMember){
 	      	votes[members[i]]++;
 	      }
 	    }
@@ -312,7 +315,7 @@ contract Uniond {
 	}
 
   	//transfer votes
-  	//should this exist? what will stop people from selling votes?
+  	//decentralised whip function
 	function transfer(address reciever, uint amount) returns (uint success){
 	    if(votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
