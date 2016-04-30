@@ -17,3 +17,25 @@ We are not trying to put exisiting unions into code, we are trying to facilitate
 As labour markets become horizontal and people sell their skills in the marketplace outside of traditional corporate structures, there is a need for collective organising of such skills and interests.
 
 Unions as they exist today are often forced into arbitrary membership structures based on workplace or employer commonality. UnionD allows people to come together based on skills and interests (as well as traditional workplace commonality).
+
+#Roles
+
+##Member(s)
+
+Persons who join together for a common purpose.
+
+##MemberAdmin(s)
+
+Members who have the power to add new members to the UnionD.
+
+##Treasurer(s)
+
+Members who have the power to spend UnionD funds (ether).
+
+##Representative(s)
+
+Members who have the power to speak on behalf of the UnionD.
+
+##Chair(s)
+
+Members who have the power to set the agenda of issues.
