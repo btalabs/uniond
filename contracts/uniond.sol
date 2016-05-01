@@ -17,8 +17,9 @@ contract Uniond {
 	
 	mapping(address => Member) public member;
 	address[] public members;
+	Issues [] public issues;
 
-	mapping(uint => Issue) public issues;
+//	mapping(uint => Issue) public issues;
 	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
