@@ -131,7 +131,7 @@ contract Uniond {
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
 	    				AdminStipend(1, 1, 1, 1),
-	    				IssuesRules(10,34)
+	    				IssuesRules(10,34),
 	    				SpendRules(1, 1)
 	    				);
 	}
