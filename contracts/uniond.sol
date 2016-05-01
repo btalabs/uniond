@@ -19,6 +19,8 @@ contract Uniond {
 	uint public chairCount;
 	uint public memberAdminCount;
 	uint public tokenSupply;
+//    Payroll[] public payroll;
+
 	
 	mapping(address => Member) public member;
 	address[] public members;
@@ -33,6 +35,12 @@ contract Uniond {
 	mapping(uint => address[]) public ammendmentVotes;
 	mapping(address => uint) public votes;
 	mapping(address => uint) public tokens;
+
+//	struct Payroll {
+//	    address memberAddress;
+//	    uint dueAmount;
+//	    uint lastPaymentDate;
+//	}
 
 	struct Ammendment {
 		string reason;
@@ -353,7 +361,7 @@ contract Uniond {
         var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
 
           // 28 days after submission if the consultation level is reached AND the approval rate is not met then disable the issue.
-          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.minConsultationLevel) && (percentApproval<constitution.minApprovalRate)){
+          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.issuesRules.minConsultationLevel) && (percentApproval<constitution.issuesRules.minApprovalRate)){
             issues[i].visible=false;
           }
 
@@ -444,6 +452,36 @@ contract Uniond {
   		}
   	}
 
+/*
+  	function payStipend(member m)  returns(uint result){
+  	    var amountDue=0;
+  	    if(now>(payroll[m.address].lastPaymentDate+60*60*24)){
+            if(m.isMemberAdmin==true){
+                amountDue+= constitution.stipendRules.stipendMemberAdmin;
+            }
+            if(m.isTreasurer==true){
+                amountDue+= constitution.stipendRules.stipendTreasurer;
+            }
+            if(m.isRepresentative==true){
+                amountDue+= constitution.stipendRules.stipendRepresentative;
+            }
+            if(m.isChair==true){
+                amountDue+= constitution.stipendRules.stipendChair;
+            }
+            if(payroll.contains[m.address]{
+                payroll[m.address].dueAmount=amountDue;
+                payroll[m.address].lastPaymentDate=now;
+            }
+            else{
+                thisPayroll = Payroll(m.address,amountDue,now);
+                payroll.push(thisPayroll);
+            }
+            return 1;
+        }
+        return 0;
+  	}
+*/
+
   	// Clauses -->
     // GeneralRules == 1_
     // ElectionRules == 2_
@@ -474,10 +512,10 @@ contract Uniond {
   			   constitution.electionRules.mandateDuration = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 31){
-  			   constitution.MemberRules.joiningFee = ammendments[ammendment].value;
+  			   constitution.memberRules.joiningFee = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 32){
-  			   constitution.MemberRules.subscriptionPeriod = ammendments[ammendment].value;
+  			   constitution.memberRules.subscriptionPeriod = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 41){
   			   constitution.stipendRules.stipendTreasurer = ammendments[ammendment].value;
