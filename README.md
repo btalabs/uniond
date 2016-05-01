@@ -58,6 +58,10 @@ Treasurer(s) can spend funds belonging to the UnionD. If there are multiple trea
 
 Any member can create an election. Elections are for special roles. Default setting is by a simple majority (50% + 1 vote).
 
+##Ammendments
+
+Any member can propose to change the settings or constitution. Ammendments are passed by a super majority (2/3 popular vote).
+
 ##Commerce
 
 UnionD issues its own currency. The  purpose of this currency is to incentivise behaviours which are in the interests of the UnionD. Currency is issued to members each time they renew their subscription. This fiat currency can be used to purchase goods and services from anyone who recognises the value of the particular UnionD.
