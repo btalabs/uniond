@@ -3,8 +3,7 @@
 //Thanks to @XertroV for @voteFlux issue based direct democracy
 // TODO  renew membership function
 // 	payStipend - may need new data struct
-//	put time limit on office
-//  sendToken
+//	reviewOffice - put time limit on office 
 
 contract Uniond {
 	
@@ -18,6 +17,7 @@ contract Uniond {
 	uint public treasurerCount;
 	uint public chairCount;
 	uint public memberAdminCount;
+	uint public representativeCount;
 	uint public tokenSupply;
 //    Payroll[] public payroll;
 
@@ -94,6 +94,11 @@ contract Uniond {
 	    bool isTreasurer;
 	    bool isRepresentative;
 	    bool isChair;
+	    uint electedMemberAdminDate;
+	    uint electedTreasurerDate;
+	    uint electedRepresentativeDate;
+	    uint electedChairDate;
+
 	}
 
 	struct SpendRules {
@@ -119,7 +124,7 @@ contract Uniond {
     	uint subscriptionPeriod;
    	}
 
-    struct IssuesRules {
+    struct IssueRules {
         uint minApprovalRate;
         uint minConsultationLevel;
     }
@@ -140,14 +145,14 @@ contract Uniond {
 		ElectionRules electionRules;
 		MemberRules memberRules;
 		StipendRules stipendRules;
-		IssuesRules issuesRules;
+		IssueRules issueRules;
         SpendRules spendRules;
         TokenRules tokenRules;
-      }
+    }
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, 0, true, true, true, true, true);
+	    member[msg.sender] = Member(now, 0, true, true, true, true, true, 0, 0, 0, 0);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
@@ -160,7 +165,7 @@ contract Uniond {
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
 	    				StipendRules(1, 1, 1, 1),
-	    				IssuesRules(10,34),
+	    				IssueRules(10,34),
 	    				SpendRules(1, 1),
 	    				TokenRules(1000)
 	    				);
@@ -189,6 +194,13 @@ contract Uniond {
 
 	modifier onlyChair {
 	    if (!member[msg.sender].isChair) {
+	      throw;
+	    }
+	    _
+	}
+
+	modifier onlySpecialMember {
+	    if (!member[msg.sender].isChair || !member[msg.sender].isTreasurer || !member[msg.sender].isMemberAdmin) {
 	      throw;
 	    }
 	    _
@@ -239,8 +251,8 @@ contract Uniond {
   		}
   	}
 
-  	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 
-	// 4 == revoke treasurer, 5 == revoke memberAdmin, 6 == revoke Chair
+  	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 4 == representative 
+	// 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
   	function executeElectionMandate(uint election) returns (uint success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
@@ -248,32 +260,46 @@ contract Uniond {
   				//add treasurer
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
+			    member[nominee].electedTreasurerDate = now;
 			    treasurerCount++;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
+		   	   	member[nominee].electedMemberAdminDate = now;
 		   	   	memberAdminCount++;
   			} else if (elections[election].role == 3) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
+  				member[nominee].electedChairDate = now;
   				chairCount++;
-  			} else if (elections[election].role == 4) {
+  			} else if (elections[election].role == 5) {
   				//revoke treasurer
   				member[nominee].isTreasurer = false;
   				elections[election].executed = true;
   				treasurerCount--;
-  			} else if (elections[election].role == 5) {
+  			} else if (elections[election].role == 6) {
   				//revoke memberAdmin
   				member[nominee].isMemberAdmin = false;
   				elections[election].executed = true;
   				memberAdminCount--;
-  			} else if (elections[election].role == 6) {
+  			} else if (elections[election].role == 7) {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
   				chairCount--;
+  			} else if (elections[election].role == 4) {
+  				//add representative
+  				member[nominee].isRepresentative = true;
+  				elections[election].executed = true;
+  				member[nominee].electedRepresentativeDate = now;
+  				representativeCount++;
+  			} else if (elections[election].role == 8) {
+  				//revoke representative
+  				member[nominee].isRepresentative = false;
+  				elections[election].executed = true;
+  				representativeCount--;
   			} else {
   				return 0;
   			}
@@ -286,7 +312,7 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false);
+  			member[msg.sender] = Member(now, 0, false, false, false, false, false, 0, 0, 0, 0);
   			return 1;
   		}
   		return 0;
@@ -302,14 +328,54 @@ contract Uniond {
   		return 0;
   	}
 
-  	function reviewMembers() onlyMemberAdmin returns (uint success){
+  	function reviewMembers() returns (uint success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].renewalDate > constitution.memberRules.subscriptionPeriod){
   				member[m].isMember = true;
   			} else {
   				member[m].isMember = false;
-  				delete members[i];
+  				//delete members[i]; -- this will stuff up review of special roles
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewChairs() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedChairDate < constitution.electionRules.mandateDuration){
+  				member[m].isChair = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewMemberAdmins() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedMemberAdminDate < constitution.electionRules.mandateDuration){
+  				member[m].isMemberAdmin = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewRepresentatives() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedRepresentativeDate < constitution.electionRules.mandateDuration){
+  				member[m].isRepresentative = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewTreasurers() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedTreasurerDate < constitution.electionRules.mandateDuration){
+  				member[m].isTreasurer = false;
   			}
   		}
   		return 1;
@@ -361,7 +427,7 @@ contract Uniond {
         var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
 
           // 28 days after submission if the consultation level is reached AND the approval rate is not met then disable the issue.
-          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.issuesRules.minConsultationLevel) && (percentApproval<constitution.issuesRules.minApprovalRate)){
+          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.issueRules.minConsultationLevel) && (percentApproval<constitution.issueRules.minApprovalRate)){
             issues[i].visible=false;
           }
 
@@ -488,6 +554,7 @@ contract Uniond {
     // MemberRules == 3_
     // StipendRules == 4_
     // SpendRules == 5_
+    // TokenRules == 6_
   	function executeAmmendmentMandate(uint ammendment) returns (uint success){
   		if(!ammendments[ammendment].executed && callAmmendment(ammendment) == 1){
   			if(ammendments[ammendment].clause == 11){
@@ -535,6 +602,9 @@ contract Uniond {
   			} else if (ammendments[ammendment].clause == 52){
   			   	constitution.spendRules.minSignatures = ammendments[ammendment].value;
   			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 61){
+  			   	constitution.tokenRules.memberCredit = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
   			} else {
   				return 0;
   			}
@@ -564,7 +634,6 @@ contract Uniond {
   		} else {
   			return false;
   		}
-  		
   	}
 
 }
