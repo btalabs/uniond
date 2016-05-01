@@ -3,8 +3,7 @@
 //Thanks to @XertroV for @voteFlux issue based direct democracy
 // TODO  renew membership function
 // 	payStipend - may need new data struct
-//	put time limit on office
-//  sendToken
+//	reviewOffice - put time limit on office 
 
 contract Uniond {
 	
@@ -138,7 +137,7 @@ contract Uniond {
 		IssuesRules issuesRules;
         SpendRules spendRules;
         TokenRules tokenRules;
-      }
+    }
 
 	//constructor
  	function Uniond(){
@@ -453,6 +452,7 @@ contract Uniond {
     // MemberRules == 3_
     // StipendRules == 4_
     // SpendRules == 5_
+    // TokenRules == 6_
   	function executeAmmendmentMandate(uint ammendment) returns (uint success){
   		if(!ammendments[ammendment].executed && callAmmendment(ammendment) == 1){
   			if(ammendments[ammendment].clause == 11){
@@ -499,6 +499,9 @@ contract Uniond {
   			   	ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 52){
   			   	constitution.spendRules.minSignatures = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 61){
+  			   	constitution.tokenRules.memberCredit = ammendments[ammendment].value;
   			   	ammendments[ammendment].executed = true;
   			} else {
   				return 0;
