@@ -1,6 +1,7 @@
 //License: GPL
 //Author: @hugooconnor @arkhh
 //Thanks to @XertroV for @voteFlux issue based direct democracy
+// TODO  renew membership function
 
 contract Uniond {
 	
@@ -10,6 +11,7 @@ contract Uniond {
 	uint public electionSerial;
 	uint public paymentSerial;
 	uint public spendSerial;
+	uint public ammendmentSerial;
 
 	uint public treasurerCount;
 	uint public chairCount;
@@ -22,10 +24,21 @@ contract Uniond {
 	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
+	mapping(uint => Ammendment) public ammendments;
 	
 	mapping(uint => address[]) public electionVotes;
+	mapping(uint => address[]) public ammendmentVotes;
 	mapping(address => uint) public votes;
 	mapping(address => uint) public tokens;
+
+	struct Ammendment {
+		string reason;
+		uint clause;
+		uint value;
+		uint deadline;
+		bool executed;
+		uint totalVoters;
+	}
 
 	struct Spend{
 		address recipient;
@@ -45,7 +58,6 @@ contract Uniond {
 	struct Election {
 		address owner;
 	    address nominee;
-	    bool appoint;
 	    uint role;
 	 	uint deadline;
 	    bool executed;
@@ -82,7 +94,7 @@ contract Uniond {
         uint nbrTreasurer;
         uint nbrSecretary;
         uint nbrRepresentative;
-        uint nbrAdmin;
+        uint nbrMemberAdmin;
     }
 
 	struct ElectionRules {
@@ -96,18 +108,18 @@ contract Uniond {
     	uint subscriptionPeriod;
    	}	
 
-    struct AdminStipend {
+    struct StipendRules {
         uint stipendTreasurer;
-        uint stipendSecretary;
+        uint stipendChair;
         uint stipendRepresentative;
-        uint stipendAdmin;
+        uint stipendMemberAdmin;
     }
 
 	struct Constitution {
 		GeneralRules generalRules;
 		ElectionRules electionRules;
 		MemberRules memberRules;
-		AdminStipend adminStipend;
+		AdminStipend stipendRules;
         SpendRules spendRules;
       }
 
@@ -120,6 +132,7 @@ contract Uniond {
 	    electionSerial = 0;
 	    paymentSerial = 0;
 	    spendSerial = 0;
+	    constitutionSerial = 0;
 	    constitution = Constitution(
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
@@ -168,10 +181,10 @@ contract Uniond {
 */
 
 	
-  	function addElection(address nominee, uint position, bool appoint) returns (uint success){
+  	function addElection(address nominee, uint position) returns (uint success){
   	    uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
-  		elections[electionSerial] = Election(msg.sender, nominee, appoint, position, deadline, false, 0);
+  		elections[electionSerial] = Election(msg.sender, nominee, position, deadline, false, 0);
   		electionSerial++;
   		return 1;
   	}
@@ -205,7 +218,7 @@ contract Uniond {
 
   	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 
 	// 4 == revoke treasurer, 5 == revoke memberAdmin, 6 == revoke Chair
-  	function executeMandate(uint election) returns (uint success){
+  	function executeElectionMandate(uint election) returns (uint success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
   			if(elections[election].role == 1){
@@ -371,7 +384,7 @@ contract Uniond {
 			return 0;
 		}
 	}
-	
+
 	function executeSpend(uint spend) onlyTreasurer returns (uint success){
 		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
 			spends[spend].recipient.send(spends[spend].amount);
@@ -381,5 +394,84 @@ contract Uniond {
 			return 0;
 		}
 	}
+
+	function newAmmendment(string reason, uint clause, uint value) onlyMember returns (uint success){
+		uint duration = constitution.electionRules.duration;
+  		uint deadline = now + duration;
+  		ammendments[ammendmentSerial] = Ammendment(reason, clause, value, deadline, false, 0);
+  		ammendmentSerial++;
+	}
+
+	//todo set as supermajority;
+	function callAmmendment(uint ammendment) returns (uint result){
+  		if(now > ammendments[ammendment].deadline && ammendmentVotes[ammendment].length > (members.length / 2)){
+  			return 1;
+  		} else {
+  			return 0;
+  		}
+  	}
+
+  	// Clauses -->
+    // GeneralRules == 1_
+    // ElectionRules == 2_
+    // MemberRules == 3_
+    // StipendRules == 4_
+    // SpendRules == 5_
+  	function executeAmmendmentMandate(uint ammendment) returns (uint success){
+  		if(!ammendments[ammendment].executed && callAmmendment(ammendment) == 1){
+  			if(ammendments[ammendment].clause == 11){
+  				constitution.generalRules.nbrTreasurer = ammendments[ammendment].value;
+  				ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 12){
+  				constitution.generalRules.nbrSecretary = ammendments[ammendment].value;
+  				ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 13){
+  				constitution.generalRules.nbrRepresentative = ammendments[ammendment].value;
+  				ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 14){
+  				constitution.generalRules.nbrMemberAdmin = ammendments[ammendment].value;
+  				ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 21){
+  			   constitution.electionRules.duration = ammendments[ammendment].value;
+  			   ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 22){
+  			   constitution.electionRules.winThreshold = ammendments[ammendment].value;
+  			   ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 23){
+  			   constitution.electionRules.mandateDuration = ammendments[ammendment].value;
+  			   ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 31){
+  			   constitution.MemberRules.joiningFee = ammendments[ammendment].value;
+  			   ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 32){
+  			   constitution.MemberRules.subscriptionPeriod = ammendments[ammendment].value;
+  			   ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 41){
+  			   constitution.stipendRules.stipendTreasurer = ammendments[ammendment].value;
+  			  	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 42){
+  			   	constitution.stipendRules.stipendChair = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 43){
+  				constitution.stipendRules.stipendRepresentative = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 44){
+  			   	constitution.stipendRules.stipendMemberAdmin = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 51){
+  			   	constitution.spendRules.threshold = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 52){
+  			   	constitution.spendRules.minSignatures = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else {
+  				return 0;
+  			}
+  			return 1;
+  		} else {
+  			//fail case
+  			return 0;
+  		}
+  	}
 
 }
