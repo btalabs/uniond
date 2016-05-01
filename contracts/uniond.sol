@@ -152,7 +152,7 @@ contract Uniond {
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, 0, true, true, true, true, true, 0, 0, 0, 0);
+	    member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, now, now);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
@@ -312,15 +312,18 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			var renewalDate = now + 60*60*24*365;
-  			member[msg.sender] = Member(now, renewalDate, false, false, false, false, false, 0, 0, 0, 0);
+//  			var renewalDate = now + 60*60*24*365;
+  			member[msg.sender] = Member(now, now, false, false, false, false, false, 0, 0, 0, 0);
+//  			member[msg.sender] = Member(now, renewalDate, false, false, false, false, false, 0, 0, 0, 0);
   			return 1;
   		}
   		return 0;
   	}
 
-  	function addMember(address newMember) onlyMemberAdmin returns (uint success){
-  		if(member[newMember].joinDate < now){
+//  	function addMember(address newMember) onlyMemberAdmin returns (uint success){
+  	function addMember(address newMember)  returns (uint success){
+  		if(true){
+//  		if(member[newMember].joinDate < now){
   			members.push(newMember);
   			member[newMember].isMember = true;
   			member[newMember].renewalDate = now;
