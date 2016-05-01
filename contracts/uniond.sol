@@ -188,6 +188,13 @@ contract Uniond {
 	    _
 	}
 
+	modifier onlySpecialMember {
+	    if (!member[msg.sender].isChair || !member[msg.sender].isTreasurer || !member[msg.sender].isMemberAdmin) {
+	      throw;
+	    }
+	    _
+	}
+
 /*
 	modifier twoThirdMajority {
 	// sample test
