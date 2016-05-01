@@ -9,17 +9,30 @@ contract Uniond {
 	uint public issueSerial;
 	uint public electionSerial;
 	uint public paymentSerial;
+	uint public spendSerial;
+
+	uint public treasurerCount;
+	uint public chairCount;
+	uint public memberAdminCount;
 	
 	mapping(address => Member) public member;
 	address[] public members;
 
 	mapping(uint => Issue) public issues;
+	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
 	
 	mapping(uint => address[]) public electionVotes;
 	mapping(address => uint) public votes;
 	mapping(address => uint) public tokens;
+
+	struct Spend{
+		address recipient;
+		uint amount;
+		address[] signatures;
+		bool spent;
+	}
 
 	struct Payment{
 		address spender;
@@ -60,12 +73,10 @@ contract Uniond {
 	    bool isChair;
 	}
 
-/*
 	struct SpendRules {
         uint threshold; // number of signature required for spending more than 10 eth
-        uint signatureThreshold; //
+        uint minSignatures; //
     }
-*/
 
     struct GeneralRules {
         uint nbrTreasurer;
@@ -103,7 +114,7 @@ contract Uniond {
 		MemberRules memberRules;
 		AdminStipend adminStipend;
 		IssuesRules issuesRules;
-        //SpendRules[] spendRules;
+        SpendRules spendRules;
       }
 
 	//constructor
@@ -114,12 +125,14 @@ contract Uniond {
 	    issueSerial = 0;
 	    electionSerial = 0;
 	    paymentSerial = 0;
+	    spendSerial = 0;
 	    constitution = Constitution(
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
 	    				AdminStipend(1, 1, 1, 1),
 	    				IssuesRules(10,34)
+	    				SpendRules(1, 1)
 	    				);
 	}
 
@@ -206,26 +219,32 @@ contract Uniond {
   				//add treasurer
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
+			    treasurerCount++;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
+		   	   	memberAdminCount++;
   			} else if (elections[election].role == 3) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
+  				chairCount++;
   			} else if (elections[election].role == 4) {
   				//revoke treasurer
   				member[nominee].isTreasurer = false;
   				elections[election].executed = true;
+  				treasurerCount--;
   			} else if (elections[election].role == 5) {
   				//revoke memberAdmin
   				member[nominee].isMemberAdmin = false;
   				elections[election].executed = true;
+  				memberAdminCount--;
   			} else if (elections[election].role == 6) {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
+  				chairCount--;
   			} else {
   				return 0;
   			}
@@ -349,6 +368,39 @@ contract Uniond {
 	//get membership count
 	function getMemberCount() returns (uint count){
 	    count = members.length;
+	}
+
+	function newSpend(uint amount, address recipient) onlyTreasurer{
+		address[] memory signatures;
+		spends[spendSerial] = Spend(recipient, amount, signatures, false);
+		spendSerial++;
+	}
+
+	function signSpend(uint spend) onlyTreasurer returns (uint success){
+		//check hasn't already signed;
+		bool hasSigned = false;
+		for(var i=0; i < spends[spend].signatures.length; i++){
+			if(msg.sender == spends[spend].signatures[i]){
+				hasSigned = true;
+				break;
+			}
+		}
+		if(!hasSigned){
+		 	spends[spend].signatures.push(msg.sender);
+		 	return 1;
+		} else {
+			return 0;
+		}
+	}
+	
+	function executeSpend(uint spend) onlyTreasurer returns (uint success){
+		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
+			spends[spend].recipient.send(spends[spend].amount);
+			spends[spend].spent = true;
+			return 1;
+		} else {
+			return 0;
+		}
 	}
 
 }
