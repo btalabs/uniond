@@ -18,6 +18,7 @@ contract Uniond {
 	uint public treasurerCount;
 	uint public chairCount;
 	uint public memberAdminCount;
+	uint public representativeCount;
 
 	uint public tokenSupply;
 	
@@ -88,6 +89,11 @@ contract Uniond {
 	    bool isTreasurer;
 	    bool isRepresentative;
 	    bool isChair;
+	    uint electedMemberAdminDate;
+	    uint electedTreasurerDate;
+	    uint electedRepresentativeDate;
+	    uint electedChairDate;
+
 	}
 
 	struct SpendRules {
@@ -240,8 +246,8 @@ contract Uniond {
   		}
   	}
 
-  	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 
-	// 4 == revoke treasurer, 5 == revoke memberAdmin, 6 == revoke Chair
+  	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 4 == representative 
+	// 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
   	function executeElectionMandate(uint election) returns (uint success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
@@ -249,32 +255,46 @@ contract Uniond {
   				//add treasurer
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
+			    member[nominee].electedTreasurerDate = now;
 			    treasurerCount++;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
+		   	   	member[nominee].electedMemberAdminDate = now;
 		   	   	memberAdminCount++;
   			} else if (elections[election].role == 3) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
+  				member[nominee].electedChairDate = now;
   				chairCount++;
-  			} else if (elections[election].role == 4) {
+  			} else if (elections[election].role == 5) {
   				//revoke treasurer
   				member[nominee].isTreasurer = false;
   				elections[election].executed = true;
   				treasurerCount--;
-  			} else if (elections[election].role == 5) {
+  			} else if (elections[election].role == 6) {
   				//revoke memberAdmin
   				member[nominee].isMemberAdmin = false;
   				elections[election].executed = true;
   				memberAdminCount--;
-  			} else if (elections[election].role == 6) {
+  			} else if (elections[election].role == 7) {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
   				chairCount--;
+  			} else if (elections[election].role == 4) {
+  				//add representative
+  				member[nominee].isRepresentative = true;
+  				elections[election].executed = true;
+  				member[nominee].electedRepresentativeDate = now;
+  				representativeCount++;
+  			} else if (elections[election].role == 8) {
+  				//revoke representative
+  				member[nominee].isRepresentative = false;
+  				elections[election].executed = true;
+  				representativeCount--;
   			} else {
   				return 0;
   			}
@@ -314,6 +334,9 @@ contract Uniond {
   			}
   		}
   		return 1;
+  	}
+
+  	function reviewOffice() onlyMemberAdmin returns (uint success){
   	}
   	
   	//todo -- add multisig on spending
