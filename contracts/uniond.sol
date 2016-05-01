@@ -410,6 +410,8 @@ contract Uniond {
 		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
 			spends[spend].recipient.send(spends[spend].amount);
 			spends[spend].spent = true;
+			payments[paymentSerial] =  Payment(msg.sender, recipient, reason, amount, now);
+			paymentSerial++;
 			return 1;
 		} else {
 			return 0;
