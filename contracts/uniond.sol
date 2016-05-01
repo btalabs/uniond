@@ -73,12 +73,10 @@ contract Uniond {
 	    bool isChair;
 	}
 
-/*
 	struct SpendRules {
         uint threshold; // number of signature required for spending more than 10 eth
-        uint signatureThreshold; //
+        uint minSignatures; //
     }
-*/
 
     struct GeneralRules {
         uint nbrTreasurer;
@@ -96,7 +94,12 @@ contract Uniond {
   	struct MemberRules {
     	uint joiningFee;
     	uint subscriptionPeriod;
-   	}	
+   	}
+
+    struct IssuesRules {
+        uint minApprovalRate;
+        uint minConsultationLevel;
+    }
 
     struct AdminStipend {
         uint stipendTreasurer;
@@ -110,7 +113,8 @@ contract Uniond {
 		ElectionRules electionRules;
 		MemberRules memberRules;
 		AdminStipend adminStipend;
-        //SpendRules[] spendRules;
+		IssuesRules issuesRules;
+        SpendRules spendRules;
       }
 
 	//constructor
@@ -126,7 +130,9 @@ contract Uniond {
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
-	    				AdminStipend(1, 1, 1, 1)
+	    				AdminStipend(1, 1, 1, 1),
+	    				IssuesRules(10,34),
+	    				SpendRules(1, 1)
 	    				);
 	}
 
@@ -319,6 +325,20 @@ contract Uniond {
 	    return 1;
 	}
 
+    function selectAgenda(){
+        for(var i=0; i < issues.length; i++){
+        var percentVoters = ((issues[i].approve+issues[i].disapprove)/totalVoters)*100;
+        var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
+
+          // 28 days after submission if the consultation level is reached AND the approval rate is not met then disable the issue.
+          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.minConsultationLevel) && (percentApproval<constitution.minApprovalRate)){
+            issues[i].visible=false;
+          }
+
+        }
+    }
+
+
     //vote on an issue
     //q - should members who haven't paid subscription be able to vote with accumulated votes?
   	function vote(uint issue, bool approve, uint amount) onlyMember returns (uint success){
@@ -350,9 +370,10 @@ contract Uniond {
 	    count = members.length;
 	}
 
-	function newSpend(uint amount, address recipient) onlyTreasurer returns (uint spendSerial){
+	function newSpend(uint amount, address recipient) onlyTreasurer{
 		address[] memory signatures;
 		spends[spendSerial] = Spend(recipient, amount, signatures, false);
+		spendSerial++;
 	}
 
 	function signSpend(uint spend) onlyTreasurer returns (uint success){
@@ -367,6 +388,16 @@ contract Uniond {
 		if(!hasSigned){
 		 	spends[spend].signatures.push(msg.sender);
 		 	return 1;
+		} else {
+			return 0;
+		}
+	}
+	
+	function executeSpend(uint spend) onlyTreasurer returns (uint success){
+		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
+			spends[spend].recipient.send(spends[spend].amount);
+			spends[spend].spent = true;
+			return 1;
 		} else {
 			return 0;
 		}
