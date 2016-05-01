@@ -123,6 +123,10 @@ contract Uniond {
         uint stipendMemberAdmin;
     }
 
+    struct TokenRules {
+    	uint memberCredit;
+    }
+
 	struct Constitution {
 		GeneralRules generalRules;
 		ElectionRules electionRules;
@@ -130,6 +134,7 @@ contract Uniond {
 		StipendRules stipendRules;
 		IssuesRules issuesRules;
         SpendRules spendRules;
+        TokenRules tokenRules;
       }
 
 	//constructor
@@ -148,7 +153,8 @@ contract Uniond {
 	    				MemberRules(1, 1),
 	    				StipendRules(1, 1, 1, 1),
 	    				IssuesRules(10,34),
-	    				SpendRules(1, 1)
+	    				SpendRules(1, 1),
+	    				TokenRules(1000)
 	    				);
 	}
 
@@ -272,7 +278,7 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false);
+  			member[msg.sender] = Member(now, 0, false, false, false, false, false,);
   			return 1;
   		}
   		return 0;
@@ -513,6 +519,9 @@ contract Uniond {
   			tokens[msg.sender] -= _value;
   			tokens[_to] += _value;
   			return true;	
+  		} else if (member[msg.sender].isMember && tokens[msg.sender] >= _value - constitution.tokenRules.memberCredit) {
+  			tokens[msg.sender] -= _value;
+  			tokens[_to] += _value;
   		} else {
   			return false;
   		}
