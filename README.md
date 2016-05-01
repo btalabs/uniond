@@ -52,7 +52,7 @@ Any member can create an issue. Issues are determined by Flux mechanics, develop
 
 ##Spending
 
-Treasurer(s) can spend funds belonging to the UnionD. If there are multiple treasurers, spending is by a super-majority (multi-sig).
+Treasurer(s) can spend funds belonging to the UnionD. Funds are collected through dues paid by the members and by the profitable activies of the UnionD. If there are multiple treasurers, spending is by a super-majority (multi-sig).
 
 ##Elections
 

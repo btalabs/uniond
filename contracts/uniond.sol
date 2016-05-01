@@ -19,6 +19,8 @@ contract Uniond {
 	uint public treasurerCount;
 	uint public chairCount;
 	uint public memberAdminCount;
+
+	uint public tokenSupply;
 	
 	mapping(address => Member) public member;
 	address[] public members;
@@ -373,7 +375,7 @@ contract Uniond {
 
   	//transfer votes
   	//decentralised whip function
-	function transfer(address reciever, uint amount) returns (uint success){
+	function transferVotes(address reciever, uint amount) returns (uint success){
 	    if(votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
 	      votes[reciever] += amount;
@@ -499,6 +501,25 @@ contract Uniond {
   			//fail case
   			return 0;
   		}
+  	}
+
+  	function totalSupply() constant returns (uint256 supply){
+  		return tokenSupply;
+  	}
+
+  	function balanceOf(address _owner) constant returns (uint256 balance){
+  		return tokens[_owner];
+  	}
+
+  	function transfer(address _to, uint256 _value) returns (bool success){
+  		if(tokens[msg.sender] >= _value){
+  			tokens[msg.sender] -= _value;
+  			tokens[_to] += _value;
+  			return true;	
+  		} else {
+  			return false;
+  		}
+  		
   	}
 
 }
