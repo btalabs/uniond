@@ -15,18 +15,15 @@ contract Uniond {
 	uint public paymentSerial;
 	uint public spendSerial;
 	uint public ammendmentSerial;
-
 	uint public treasurerCount;
 	uint public chairCount;
 	uint public memberAdminCount;
-
 	uint public tokenSupply;
 	
 	mapping(address => Member) public member;
 	address[] public members;
 	Issue [] public issues;
 
-//	mapping(uint => Issue) public issues;
 	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
