@@ -2,6 +2,9 @@
 //Author: @hugooconnor @arkhh
 //Thanks to @XertroV for @voteFlux issue based direct democracy
 // TODO  renew membership function
+// 	payStipend - may need new data struct
+//	put time limit on office
+//  sendToken
 
 contract Uniond {
 	
@@ -86,7 +89,7 @@ contract Uniond {
 	}
 
 	struct SpendRules {
-        uint threshold; // number of signature required for spending more than 10 eth
+        uint threshold; // number of signature required for spending more than 10 eth -- how will this work?
         uint minSignatures; //
     }
 
@@ -425,7 +428,7 @@ contract Uniond {
   		ammendmentSerial++;
 	}
 
-	//todo set as supermajority;
+	//todo set as supermajority-- 2/3;
 	function callAmmendment(uint ammendment) returns (uint result){
   		if(now > ammendments[ammendment].deadline && ammendmentVotes[ammendment].length > (members.length / 2)){
   			return 1;
