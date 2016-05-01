@@ -281,7 +281,7 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false,);
+  			member[msg.sender] = Member(now, 0, false, false, false, false, false);
   			return 1;
   		}
   		return 0;
@@ -422,8 +422,9 @@ contract Uniond {
 		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
 			spends[spend].recipient.send(spends[spend].amount);
 			spends[spend].spent = true;
-			payments[paymentSerial] =  Payment(msg.sender, recipient, reason, amount, now);
-			paymentSerial++;
+			//address reciever = spends[spend].recipient;
+			//payments[paymentSerial] =  Payment(msg.sender, reciever, reason, amount, now);
+			//paymentSerial++;
 			return 1;
 		} else {
 			return 0;
