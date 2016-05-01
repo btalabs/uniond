@@ -312,7 +312,8 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false, 0, 0, 0, 0);
+  			var renewalDate = now + 60*60*24*365;
+  			member[msg.sender] = Member(now, renewalDate, false, false, false, false, false, 0, 0, 0, 0);
   			return 1;
   		}
   		return 0;
