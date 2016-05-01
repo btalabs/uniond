@@ -119,7 +119,7 @@ contract Uniond {
     	uint subscriptionPeriod;
    	}
 
-    struct IssuesRules {
+    struct IssueRules {
         uint minApprovalRate;
         uint minConsultationLevel;
     }
@@ -140,14 +140,14 @@ contract Uniond {
 		ElectionRules electionRules;
 		MemberRules memberRules;
 		StipendRules stipendRules;
-		IssuesRules issuesRules;
+		IssueRules issueRules;
         SpendRules spendRules;
         TokenRules tokenRules;
     }
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, 0, true, true, true, true, true);
+	    member[msg.sender] = Member(now, 0, true, true, true, true, true, 0, 0, 0, 0);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
@@ -160,7 +160,7 @@ contract Uniond {
 	    				ElectionRules(1, 1, 1),
 	    				MemberRules(1, 1),
 	    				StipendRules(1, 1, 1, 1),
-	    				IssuesRules(10,34),
+	    				IssueRules(10,34),
 	    				SpendRules(1, 1),
 	    				TokenRules(1000)
 	    				);
@@ -307,7 +307,7 @@ contract Uniond {
 
   	function applyMember() returns (uint success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false);
+  			member[msg.sender] = Member(now, 0, false, false, false, false, false, 0, 0, 0, 0);
   			return 1;
   		}
   		return 0;
@@ -323,20 +323,57 @@ contract Uniond {
   		return 0;
   	}
 
-  	function reviewMembers() onlyMemberAdmin returns (uint success){
+  	function reviewMembers() returns (uint success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].renewalDate > constitution.memberRules.subscriptionPeriod){
   				member[m].isMember = true;
   			} else {
   				member[m].isMember = false;
-  				delete members[i];
+  				//delete members[i]; -- this will stuff up review of special roles
   			}
   		}
   		return 1;
   	}
 
-  	function reviewOffice() onlyMemberAdmin returns (uint success){
+  	function reviewChairs() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedChairDate < constitution.electionRules.mandateDuration){
+  				member[m].isChair = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewMemberAdmins() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedMemberAdminDate < constitution.electionRules.mandateDuration){
+  				member[m].isMemberAdmin = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewRepresentatives() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedRepresentativeDate < constitution.electionRules.mandateDuration){
+  				member[m].isRepresentative = false;
+  			}
+  		}
+  		return 1;
+  	}
+
+  	function reviewTreasurers() returns (uint success){
+  		for(var i=0; i < members.length; i++){
+  			address m = members[i];
+  			if (now - member[m].electedTreasurerDate < constitution.electionRules.mandateDuration){
+  				member[m].isTreasurer = false;
+  			}
+  		}
+  		return 1;
   	}
   	
   	//todo -- add multisig on spending
@@ -385,7 +422,7 @@ contract Uniond {
         var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
 
           // 28 days after submission if the consultation level is reached AND the approval rate is not met then disable the issue.
-          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.minConsultationLevel) && (percentApproval<constitution.minApprovalRate)){
+          if(((issues[i].date)+(60*60*24*28)<now) && (percentVoters>constitution.issueRules.minConsultationLevel) && (percentApproval<constitution.issueRules.minApprovalRate)){
             issues[i].visible=false;
           }
 
@@ -507,10 +544,10 @@ contract Uniond {
   			   constitution.electionRules.mandateDuration = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 31){
-  			   constitution.MemberRules.joiningFee = ammendments[ammendment].value;
+  			   constitution.memberRules.joiningFee = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 32){
-  			   constitution.MemberRules.subscriptionPeriod = ammendments[ammendment].value;
+  			   constitution.memberRules.subscriptionPeriod = ammendments[ammendment].value;
   			   ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 41){
   			   constitution.stipendRules.stipendTreasurer = ammendments[ammendment].value;
@@ -562,7 +599,6 @@ contract Uniond {
   		} else {
   			return false;
   		}
-  		
   	}
 
 }
