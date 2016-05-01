@@ -174,7 +174,6 @@ contract Uniond {
     }
 */
 
-	
   	function addElection(address nominee, uint position, bool appoint) returns (uint success){
   	    uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
@@ -326,6 +325,7 @@ contract Uniond {
 	}
 
     function selectAgenda(){
+    var totalVoters=getMemberCount();
         for(var i=0; i < issues.length; i++){
         var percentVoters = ((issues[i].approve+issues[i].disapprove)/totalVoters)*100;
         var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
