@@ -14,18 +14,18 @@ contract Uniond {
 	uint public paymentSerial;
 	uint public spendSerial;
 	uint public ammendmentSerial;
+	
 	uint public treasurerCount;
 	uint public chairCount;
 	uint public memberAdminCount;
 	uint public representativeCount;
-	uint public tokenSupply;
-//    Payroll[] public payroll;
-
 	
-	mapping(address => Member) public member;
+	uint public tokenSupply;
 	address[] public members;
 	Issue [] public issues;
+//    Payroll[] public payroll;
 
+	mapping(address => Member) public member;
 	mapping(uint => Spend) public spends;
 	mapping(uint => Payment) public payments;
 	mapping(uint => Election) public elections;
@@ -98,6 +98,7 @@ contract Uniond {
 	    uint electedTreasurerDate;
 	    uint electedRepresentativeDate;
 	    uint electedChairDate;
+	    uint salary;
 
 	}
 
@@ -138,6 +139,9 @@ contract Uniond {
 
     struct TokenRules {
     	uint memberCredit;
+    	uint canSetSalary; //0= no, >1 = yes
+    	uint salaryCap;
+    	uint salaryPeriod;
     }
 
 	struct Constitution {
@@ -152,7 +156,7 @@ contract Uniond {
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, now, now);
+	    member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, now, now, 0);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
@@ -167,7 +171,7 @@ contract Uniond {
 	    				StipendRules(1, 1, 1, 1),
 	    				IssueRules(10,34),
 	    				SpendRules(1, 1),
-	    				TokenRules(1000)
+	    				TokenRules(1000, 0, 1000, 100000)
 	    				);
 	}
 
@@ -383,6 +387,7 @@ contract Uniond {
   		return 1;
   	}
   	
+  	/*
   	//todo -- add multisig on spending
   	function spend(address recipient, uint amount, string reason) onlyTreasurer returns (uint success){
 		if (this.balance >= amount){
@@ -394,6 +399,7 @@ contract Uniond {
 		}
 		return 0;
   	}
+  	*/
 
   	function setJoiningFee(uint fee) onlyTreasurer returns (uint success){
   		constitution.memberRules.joiningFee = fee;
@@ -410,7 +416,7 @@ contract Uniond {
   	}
 
   	//create new issue
-	function addIssue(string description, uint deadline, uint budget) onlyMember returns (uint success){
+	function addIssue(string description, uint deadline, uint budget) returns (uint success){
 	    issues[issueSerial] = Issue(msg.sender, description, false, now, 0, 0, deadline, budget);
 	    issueSerial++;
 	    //credit each member with a vote
@@ -606,6 +612,15 @@ contract Uniond {
   			   	ammendments[ammendment].executed = true;
   			} else if (ammendments[ammendment].clause == 61){
   			   	constitution.tokenRules.memberCredit = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 62){
+  			   	constitution.tokenRules.canSetSalary = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 63){
+  			   	constitution.tokenRules.salaryCap = ammendments[ammendment].value;
+  			   	ammendments[ammendment].executed = true;
+  			} else if (ammendments[ammendment].clause == 64){
+  			   	constitution.tokenRules.salaryPeriod = ammendments[ammendment].value;
   			   	ammendments[ammendment].executed = true;
   			} else {
   				return 0;
