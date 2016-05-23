@@ -220,6 +220,8 @@ contract Uniond {
     }
 */
 
+//function payDividend(uint amount) returns (uint success){}
+
   	function addElection(address nominee, uint position) returns (uint success){
   	    uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;

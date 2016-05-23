@@ -1,0 +1,207 @@
+\documentclass[12pt,twocolumn]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\begin{document}
+\title{UnionD - Re-thinking the Organisation}
+\author{Hugo O'Connor, Bit Trade Labs}
+\maketitle
+\tableofcontents
+\newpage
+\section {Status of this Memo}
+
+This document outlines the design for a decentralised autonomous organisation and requests discussion and suggestions for improvements. Distribution of this memo is currently limited as this is preview draft 0.1.
+
+\section {Acknowledgements}
+
+The following people contributed the thinking and ideas collected in this document; Max Kaye, David Factor, Jonathon Miller, Paul Ferris, Nick Swanson, Ron Tucker, Jonathan Hamel, Nick Addison, Scott Morris, Ash Fontana, Mat Mytka, Matt Hawken, Marc Ahrens and Thomas Sarek.
+
+\section {Motivation}
+
+We are trying to systematise the organising of groups of people sharing common skills and/or interests. Guilds, co-operatives and friendly societies share many of these ideas which until now have not been formalised in software.
+
+The problem we are trying to solve; how to facilitate agreement in a meaningful way that resolves the social, financial and political issues that arise from questions of how to distribute the collective resources of an organisation.
+
+We are not trying to put existing unions into code, labour unions are just one possible use-case. We are trying to facilitate new types of co-operation and collective action. Union is simply a powerful concept we can take and carry forward.
+
+As labour markets become horizontal and people sell their skills in the marketplace outside of traditional corporate structures, there is a need for collective organising of such skills and interests. As people form in temporary communities for common purpose, there is a need to re-think the distribution of equity. As organisations stress test our natural environment, there is a need to innovate in the fundamental way we undertake business -- to re-invent the organisation.
+
+\section {Background}
+
+UnionD is a Decentralised Autonomous Organisation (DAO) model that can be customised and amended to suit the will of its members (a DAO is a smart contract on the blockchain, code that runs exactly as it was programmed). A UnionD could be a full direct democracy with participation from every member. A UnionD could be a dictatorship. A UnionD could be run by a small group of elite members. The ability to shift between governance models is a key feature of the UnionD model. Typically, shifts between models of governance have been attended by long and often violent struggles. Organisations as they exist today are path dependent. The initial conditions are critical to the outcomes of the organisation. Now, with advancements in applied cryptography, it is entirely possible to build new models of governance hitherto unimagined. Furthermore, it is entirely possible to build a new social operating system as competing organisational models aggregate and trade with each other on the open market. Arguably, the foundation has already been built, we are merely implementing some of the consequential ideas.
+
+The UnionD model allows a collective organisation to represent different value states in fungible tokens. Those value states may be the right to wages, voting power, or equity. Those tokens can be traded on the open market, with the attendant efficiencies of transparency, speed, and administration.
+
+The source of authority for any organisation stems from the will of the people of whom it comprises. Countless revolutions and struggles have arisen from the clash between organisational structures, within those organisations, and between organisations and the people upon whom the will of a particular organisation has been imposed. Yet the joint stock company, a popular form of organising, has created immense value for the world. Nation states have also created tremendous value. We are not suggesting that these structures should be discontinued, rather that balance has already tipped in favour of structures that enable the proper will of the people to be expressed. UnionD is an attempt to steer a vision towards a model of organisation that is transparent, adaptable, efficient, and reflexive.
+
+\section {Key Features}
+
+\subsection {Evolutionary Constitution}
+
+A key design of the UnionD model is the ability to shift the parameters that constitute the rules and governance of the organisation. That is to say, the same model could encompass many radically different forms of governance on the spectrum from direct democracy to dictatorship. This same constitution could incorporate the hash of a root folder of natural language articles which would be hosted as a git repository. Pull requests could be voted on, enabling anyone to fork the repository and propose amendments to the articles.
+
+\subsection {Flux Democracy}
+
+Representative democracy takes power from the constituency and accumulates that power into the hands of a select few. This system has been the best we could come up with given past technological limitations, and it is far from ideal. If we take as our starting point that power should be distributed equally among the people, because 'we the people' are the ultimate source of that power, then we need to find new ways of organising our political system.  Flux Democracy proposes an issue-based direct democracy model where the individual is given a vote on each issue. However, in practice this becomes tiresome quickly, as voters become overwhelmed with the range of issues they need to vote on. Flux solves this problem by commoditizing political capital allowing members to delegate votes, accumulate votes, and vote more than once on the issues they care most about.
+
+\subsection {Fluid Equity}
+
+The Joint Stock Corporation originated during the age of exploration, and was typically used to finance the building of ships and exhibitions to obtain goods from far flung lands. This structure has allowed countless entrepreneurs to work together to achieve common goals. However, there is often a point at which shareholders stop contributing to the value generated by the company. Early investors have tremendous advantage, which is necessary given the risk and uncertainty of venture capitalism. Corporations and the system of capital financing has empirically been proven to accumulate wealth at the top as a result of this design. Early shareholders are less inclined to issue shares to latecomers. The UnionD model enables members to more seamlessly devolve power to newcomers. A UnionD could elect to issue shares as per the current model, however we are proposing the optionality of 'fluid equity'. This would enable contributors to the value of the UnionD to be rewarded for their ongoing efforts, despite perhaps joining the UnionD much later in its life-cycle. Equity in competing UnionDs could be traded on open markets for any other form of value. This would incentivise members of UnionDs to best apply their efforts towards creating value. Alternatively, members could collectively decide to operate their UnionD for some purpose other than the profit motive. In this instance, 'equity' might represent the social good generated by the UnionD, and as such, would be representative of a member's contributions toward that organisation. 
+
+\subsection {Default Transparency}
+
+Information opacity creates power imbalances within typical organisations. Those power imbalances can create division, and lead to divergent agendas. For example, the state of the organisation's finances, how funds have been spent and for what purpose, is information typically reserved for some appointed member operating within the organisation, such as a treasurer. By default, a DAO is completely open and transparent. Spending can be logged and audited. The total funds held by the UnionD can be inspected with a simple function call by anyone. This will lead to more transparent markets as DAOs interact with each other and take on obligations such as loans. Information opacity also creates risk that can lead to the complete collapse of an organisation, as the consequences of withheld information are not fully understood or appreciated. Here we can take the maxim from software development 'many eyes make bugs shallow' and apply it to the operation of the organisation.
+
+\subsection {Web-of-Trust Reputation}
+
+Social capital is difficult to quantify and we run the risk of building models that are wrong, and at worst, promote bad outcomes. Quantifying our social relationships is not something we are naturally inclined to do. Nor do we want to see a system that reduces people's reputation to a numerical score. We propose a simple model of web-of-trust endorsements. Endorsements can be made by any member of any other member. Endorsements signify only a positive relationship, however it is possible to revoke an endorsement. At this stage, we are providing a simple reputation system to help better inform members by providing a context to their decision-making. 
+
+\subsection {Merge Function}
+
+Depending on the rules of membership, a person could participate in several UnionDs simultaneously. Two separate UnionDs with convergent agendas could decide to merge to form a larger union. We anticipate that UnionDs will merge to form super-unions that may cross continents, and hold considerable influence within their domains. With size-able enough membership, these super-unions will come to challenge the sovereignty of nation-states, just as multi-national corporations are able to wield influence on existing nation-states in the current geo-political environment. UnionD's governance model presents an alternative to representative democracy, if taken to scale. The current bottleneck on super-unions is the absence of sovereign identity infrastructure, which places an unacceptable amount of power into the hands of members who have the coded privilege to admit new members. Such power could be abused to create a Sybil attack on a UnionD instance.
+
+
+\subsection {Recursive Super Union}
+
+A UnionD instance could be the member of another UnionD instance. This means that several UnionDs could belong to a super union, and furthermore, that super union could be the member of a super super union and so on. This presents many interesting options for UnionDs to form shared organisations with allied partners.
+
+\section {Resource Allocation}
+
+An organisation has broadly three resources that must be considered when implementing structures and processes to determine how those resources are distributed. These resources are reflective of the past, present and future output of the organisation and the members within it. 
+
+\subsection{Intention (Political Capital)}
+
+Where is the organisation going? Where will it commit its resources in the future? How does the organisation contribute value to the indivudual member's circumstance as a representative of that member's interests?
+
+\subsection{Attention (Time)}
+
+What will the organisation commit its time to deciding upon in the present moment? How will the agenda be set?
+
+\subsection{Equity (Ownership)}
+
+How will the productive output of the organisation be shared amongst its members to reflect past contributions on a meritocratic basis?
+
+Rather than imposing an ideology upon the processes and structures of an organisation, UnionD proposes a reflexive model that can be dynamically adjusted to the will of its membership. 
+
+Historically, speculative models of governance have been driven by strong personalities, demagogues and rhetoric, with a winner takes all approach that has lead to many bad outcomes.  Here, we can anticipate a future where natural selection and hard data determines which constitutional settings promote the greatest outcomes for the UnionD model. The UnionD instantiation with the best alignment of interests will succeed, but we will only get to this point if there is an ecosystem of competing DAOs -- which will compete for members and capital, the resources upon which they ultimately rely.
+
+\section {Special Roles}
+
+UnionD has the following special roles. These roles can be granted to every member, or to a few select members, depending on the will of the membership. Special roles can perform certain state modifying functions, as it relates to their role. Special office holders can be unelected and have their powers revoked at any point in time.
+
+\subsection {Member(s)}
+
+Persons who join together for a common purpose.
+
+\subsection{MemberAdmin(s)}
+
+Members who have the power to add new members to the UnionD instance.
+
+\subsection{Treasurer(s)}
+
+Members who have the power to spend UnionD funds (ether).
+
+\subsection{Representative(s)}
+
+Members who have the power to speak on behalf of the UnionD. Note, representatives have no coded privileges, but rather are empowered to interface with the real world to speak on behalf of the UnionD. Whilst the UnionD reflects a hive structure, there will be external expectations that such a body should have a spokesperson or spokespersons.
+
+\subsection{Chair(s)}
+
+Members who have the power to set the agenda by prioritising the visibility of issues.
+
+\section {Processes}
+
+\subsection{Constitution (settings)}
+
+The parameters of the UnionD. Changeable by super-majority vote.
+
+\subsection{Issues}
+
+Any member can create an issue. Issues are determined by Flux mechanics, developed by @Xetrov. Eg. If there are 10 issues, you get 10 votes, you can vote 10 times on the issue you care most about, or transfer your votes to another party.
+
+\subsection{Spending}
+
+Treasurer(s) can spend funds belonging to the UnionD. Funds are collected in Ether through dues paid by the members and by the profitable activities of the UnionD. If there are multiple treasurers, spending is by a minimum threshold of signatures (multi-sig).
+
+\subsection{Dividends}
+
+Members can elect to payout their UnionD's holding of ether, or a portion thereof, as dividends to be paid in proportion to member's equity holdings.
+
+\subsection{Elections}
+
+Any member can create an election. Elections are for special roles. Default setting is by a simple majority (50 percent + 1 vote). Elections are also to remove members from special roles. Elections can be run at any time.
+
+\subsection{Amendments}
+
+Any member can propose to change the settings or constitution. Amendments are passed by a super majority (2/3 popular vote).
+
+\subsection{Equity}
+
+UnionD issues its own tokens, representative of equity, or rather, a promise to redeem issued tokens for equity, and/or distribute dividends from profits earned by a UnionD. These tokens can be traded on the open market for goods, services, or other tokens of value. The purpose of this token is to incentivise behaviors which are in the interests of the UnionD. The issuance of new tokens is determined by the will of the members. It is proposed that equity is allocated daily, with members setting their 'equity salary'. Here we are generalising the notion of wages and equity/dividends. This generalised notion covers the two limiting cases of a worker in a worker owned enterprise, and a shareholder in a traditional joint stock company. Allowing members to set their level of equity remuneration may seem counter-intuitive, but has compelling arguments. Firstly, members know best their value in the market, what contributions they are making to their UnionD, and what they want in exchange for their contributions. All fluid equity arrangements are visible to the entire membership, therefore a member who sets an inappropriate level of remuneration faces the judgment of their peers, and even possible expulsion. Allowing members to set their level of remuneration removes the adversarial process of employment engagements, and the toxic secrecy that exists with our current salary system.  The existing salary process in and of itself, adds no value. Self-determined equity salaries will enable members to engage and disengage from adding value to their UnionD as and when it suits them. A simple formula could be created to guide equity remuneration taking into consideration the role, experience and time contributed by each member. Equity could be issued to contractors in exchange for work and those contractors could elect to sell their equity tokens at any time.
+
+\subsection{Endorsements}
+
+UnionD members have social capital which is captured by the process of endorsement. Endorsements cannot be transferred once earned, and can be revoked. An endorsement could mean many different things to many different UnionDs, thus we are relying on a social contract that shall emerge organically.
+
+\section {Use Cases}
+
+If properly designed, a UnionD instantiation would simply pass in parameters to its constructor to produce many existing forms of organisation. These are some possible use-cases of the UnionD model;
+
+\subsection{Labour Unions}
+
+The initial use-case we explored was the potential to transform labour unions. In Australia, for example, there have been countless scandals surrounding the misappropriation of funds by union officials. The UnionD model would bring immediate transparency to the finances of such organisations. Labour Unions often grow to a model that is, for all intensive purposes, identical to the structures of power they were initially designed to offset. For example, it would not be uncommon for top-ranking union officials to earn a salary equivalent to the upper management within a corporation. Labour Union 'apparatchiks', a term used to describe career factional operatives, can hold considerable political power within their organisations, distorting outcomes. Under the UnionD model, there is room for 'apparatchiks', however, their political capital would be allocated to them only by the explicit consent and will of their fellow members. Furthermore under the UnionD model, it is possible to organise Labour Unions around commonalities other than the workplace. Given the fractionalisation of the workforce, we can imagine Labour Unions forming under the UnionD model on the basis of shared skills. This could confer other benefits, such as peer mentoring whereby fellow members share  skills and insights of their craft, raising the quality of the workforce. A UnionD Labour Union, would provide a better conduit between workers and management, increase the tempo of decision making, and those decisions would be better reflective of the will of the members.
+
+\subsection{Co-operatives}
+
+Co-operative businesses are typically more economically resilient than many other forms of enterprise. Co-operatives operate on the Rochdale principles; open and voluntary membership, democratic governance, limited return on equity, surplus belongs to members, education of members and public in cooperative principles, and cooperation between cooperatives. The UnionD model adopts many of these principles, yet can reflexively modify the structure of the organisation according to the will of its members. For example, a UnionD could democratically decide to elect a dictator, giving that person all political capital, and the ability to unilaterally spend the UnionD's funds. Similarly, a UnionD could take on external investment by members selling their fluid equity to an external third party in exchange for capital.
+
+\subsection{Corporations}
+
+Ronald Coase identified transaction costs as the reason people choose to form partnerships and companies rather than transacting bilaterally through contracts on the market. However, the formation of companies has many attendant costs, for example, the registration fees to government, the costs of establishing legal instruments to govern the company, and the costs of socialising shareholders to an agreed vision of that company. How new entrants are brought into an existing company, is often the source of much contention - how much equity do they deserve, what type of equity will that be, etc. The UnionD model attempts to bring down those costs. In the first instance, as we are dealing with a smart contract, the cost of deploying a new UnionD instance is comparably easier and less expensive than traditional alternatives. The cost of issuing equity (or rather a promise to pay equity) is also considerably cheaper. The cognitive overhead of understanding the obligations a member enters into by forming a UnionD is also considerably lower than natural language contracts, that by definition, are open to interpretation and ambiguity. A member of a UnionD can be confident that the organisation will function exactly as it has been written to function. Whilst the UnionD model offers the potential to issue fluid equity as an ongoing concern, there is also the possibility to issue a set number of initial tokens to represent a promise to pay equity. This latter option replicates the joint stock corporation model as it was initially conceived. What distinguishes UnionD from the DAO, is the model of democratic governance and evolutionary constitution that enables a UnionD instance to evolve as it is required and willed by its members.
+
+\subsection{B-Corporations}
+
+B-Corporations use the power of business to solve social and environmental problems. Under the UnionD model, it is entirely possible for members to set the agenda of their organisation. A UnionD could elect to operate on not-for-profit principles or part thereof, to enrich their community by re-investing the wealth they create for social or environmental good. Members may choose to operate for the profit motive, but are not legally obliged to as in the case of typical corporations that are beholden to maximise shareholder value.
+
+\subsection{NGOs}
+
+Non-Government Organisations that are dependent on sources of outside funding, face cyclical challenges as funding comes and goes during the economic cycles of boom and bust. Financial independence is a way of reducing entropy, with NGOs turning to revenue raising businesses to sustain their operations. The rise of social enterprise takes this idea to its conclusion, with business conducted in a legal structure where none of the profit is privatised. The interesting possibility of the UnionD model, is that social enterprise can be conducted on a spectrum from full to partial not-for-profit motives. For example, members could elect to re-invest half of their profits into social good. As in the example of labour unions, NGOs and their constituents stand to benefit from the default transparency that the UnionD model brings.
+
+\subsection{Charities}
+
+The UnionD model could offer donors a greater say in how charitable funds are spent. A UnionD charity could offer transparency in how funds are spent. Donors could measure actions taken by the charity to alleviate social ill at the source compared with the current self-perpetuating model that keeps charitable staff employed.
+
+\subsection{Guilds}
+
+The earliest types of guild were formed as confraternities of tradesmen. Guilds controlled a particular craft within their towns of origin. Craft regulations developed by guilds offered consumer protection from poor workmanship. Guilds regulated pricing and enabled co-operation between guild members. Members sharing similar trade skills could organise under a UnionD instance to create a modern guild.
+
+\subsection{Contractors}
+
+The UnionD model presents an interesting proposition for contractors. Whereas traditional share schemes have been complex and costly, a contractor performing work for a UnionD could earn equity in exchange for their labour, even in very small amounts. As these tokens of equity are fungible, the contractor could easily sell his or her tokens on the open market. The larger the UnionD, the more liquidity there would be in the marketplace to sell those tokens.
+
+\subsection{Partnerships}
+
+Partnerships are an interesting form of equity-incentivised organisation which shares many features with those proposed by UnionD (though we note that partnerships can also be contractual without any such equity issuance) and could be considered one of the proto-UnionD organisational types. Partners are required to share both risks and rewards of the organisation and provide an environment in which parties can mutually leverage the reach of one other. Typically partnerships are prominent in service based industries that rely heavily on the social network and reputation of the partners. There are, however, strict limitations to existing partnershp structures - namely that they fall prey to the same nominal set of split-incentives that classic incorporated entities face, driven by the hard division between partner and non-partner (employee) members of the organisation. There is also a potential for sub-optimal distribution of shared resources across sub-sections of the organisation as a consequence of intra-partner politics over meritocratic distributions of resources. There is also the potential for catastrophic failure due to lack of transparency between partner silos and misrepresentation of the underlying position of the organisation in order to protect the shared reputational interest of the partnership. UnionD fluid equity is an ideal evolution of the partnership model that can smooth out inefficiencies and create a equity continuity for all participants, whilst providing the same incentives to share reputation, and an underlying default level of transparency.
+
+\section {Swarm Intelligence}
+
+A desired outcome of the UnionD model is to create a closed-loop system that can amplify the intelligence of the agents operating within it. For example, the information held by each agent accumulates collectively into a composite view that maximises informational awareness. Common knowledge displaces ignorance from agents' decision making processes. One aspect that could be characterised as a feedback loop is the dynamic by which proxies earn loyalty of the broad voter base. Members observe past actions and outcomes of proxies and re-align their allegiances accordingly. Members who earn endorsements through their actions participating in the UnionD would be more likely to attain higher offices. Taking a step back, another feedback loop is created by comparing the outcomes of various UnionDs with their particular constitutional settings. From a systems perspective, members of various UnionDs can look at the past settings and outputs of other UnionDs to compare their own settings, and this comprises a feedback loop. 
+
+\section {Testing}
+
+Genetic programming is an AI paradigm for calculating good solutions. You take a problem that can be specified as a string of numbers and can be modeled in a simulation. Take the best performing half of the modeled solutions, throw away the worst performing half, breed the survivors, and repeat the process. Whilst it is beyond the scope of this white-paper to outline such an experimental framework for testing the UnionD model, such a simulation would be theoretically possible using software agents. 
+
+\section {Values}
+
+The DAO has a key principle of non-aggression. We believe a careful consideration of values is important, given the power that UnionDs and other DAOs may hold in the near future. We propose a single simple principle of non-violence. UnionDs or other DAOs that violate this fundamental principle can be disabled through boycott of the crypto-tokens that represent the equity of the offending DAO. If such crypto-tokens are excluded from trade, the offending UnionD or DAO could be crippled economically.
+
+\section {Conclusion}
+
+The proposed UnionD model can confer many benefits that arise from the key features as outlined in this whitepaper. Network-Centric organisations such as the UnionD model stand to out compete top-down command and control operations, through a shared awareness or swarm intelligence that results in increased tempo of decision making, lower costs, better responsiveness to an uncertain business environment, reduced risks, and higher profits. UnionD's have the potential to grow their membership exponentially, to reflexively adapt their operations and provide greater autonomy and satisfaction to their workforce. We invite criticism of the ideas contained herein.
+
+\section {Code}
+
+Code for the UnionD has been developed in the Solidity language for the Ethereum blockchain;
+
+https://github.com/btalabs/uniond
+
+\end{document}
