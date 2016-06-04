@@ -8,33 +8,20 @@
 contract Uniond {
 	
 	Constitution constitution;
-
-	uint public issueSerial;
-	uint public electionSerial;
-	uint public paymentSerial;
-	uint public spendSerial;
-	uint public ammendmentSerial;
-	
-	//uint public treasurerCount;
-	//uint public chairCount;
-	//uint public memberAdminCount;
-	//uint public representativeCount;
 	
 	uint public tokenSupply;
-	address[] public members;
-	Issue [] public issues;
-//    Payroll[] public payroll;
-
-	mapping(address => Member) public member;
-	mapping(uint => Spend) public spends;
-	mapping(uint => Payment) public payments;
-	mapping(uint => Election) public elections;
-	mapping(uint => Ammendment) public ammendments;
-	
-	mapping(uint => address[]) public electionVotes;
-	mapping(uint => address[]) public ammendmentVotes;
 	mapping(address => uint) public votes;
-	mapping(address => uint) public tokens;
+  mapping(address => uint) public tokens;
+
+  address[] public members;
+  mapping(address => Member) public member;
+
+	Issue[] public issues;
+  Spend[] public spends;
+  Payment[] public payments;
+  Election[] public elections;
+  Amendment[] public amendments;
+  //Payroll[] public payroll;
 
 //	struct Payroll {
 //	    address memberAddress;
@@ -42,13 +29,13 @@ contract Uniond {
 //	    uint lastPaymentDate;
 //	}
 
-	struct Ammendment {
+	struct Amendment {
 		string reason;
 		uint clause;
 		uint value;
 		uint deadline;
 		bool executed;
-		uint totalVoters;
+		address[] votes;
 	}
 
 	struct Spend{
@@ -72,7 +59,7 @@ contract Uniond {
 	  uint role;
 	 	uint deadline;
 	  bool executed;
-	  uint totalVoters;  //TODO set after deadline is passed
+	  address[] votes;  //TODO set after deadline is passed
 	}
 
 	struct Issue {
@@ -89,6 +76,7 @@ contract Uniond {
 	struct Member {
 	  uint joinDate;
 	  uint renewalDate;
+    bool exists;
 	  bool isMember;
 	  bool isMemberAdmin;
 	  bool isTreasurer;
@@ -155,14 +143,14 @@ contract Uniond {
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, now, now, 0);
+	    member[msg.sender] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 0);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
 	    issueSerial = 0;
 	    electionSerial = 0;
 	    paymentSerial = 0;
 	    spendSerial = 0;
-	    ammendmentSerial = 0;
+	    amendmentSerial = 0;
 	    constitution = Constitution(
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
@@ -221,44 +209,42 @@ contract Uniond {
 
 //function payDividend(uint amount) returns (uint success){}
 
-  	function addElection(address nominee, uint position) returns (uint success){
+  function addElection(address nominee, uint position) returns (bool success){
   	  uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
-  		elections[electionSerial] = Election(msg.sender, nominee, position, deadline, false, 0);
-  		electionSerial++;
-  		return 1;
-  	}
+  		elections.push(Election(msg.sender, nominee, position, deadline, false, 0));
+  		return true;
+  }
 
-  	function voteElection(uint election) returns (uint success){
-  		if(now < elections[election].deadline && member[msg.sender].isMember){
-  		   //need to stop people from voting twice - probably a better way to do this...
+  function voteElection(uint election) returns (bool success){
+  		if(now < elections[election].deadline && member[msg.sender].exists && member[msg.sender].isMember){
   		   bool hasVoted = false;
-  		   for(var i=0; i < electionVotes[election].length; i++){
-  		   		if(electionVotes[election][i] == msg.sender){
+  		   for(var i=0; i < elections[election].votes.length; i++){
+  		   		if(elections[election].votes[i] == msg.sender){
   		   			hasVoted = true;
   		   			break;
   		   		}
   		   }
   		   if(!hasVoted){
-  		   		electionVotes[election].push(msg.sender);
-  		   		elections[election].totalVoters++;
-  		   		return 1;
+  		   		elections[election].votes.push(msg.sender);
+  		   		return true;
   		   }
   		}
-  		return 0;
-  	}
+  		return false;
+  }
 
-  	function callElection(uint election) returns (uint result){ // rename to triggerElection ?
-  		if(now > elections[election].deadline && electionVotes[election].length > (members.length / 2)){
+  function callElection(uint election) returns (uint result){ // rename to triggerElection ?
+  		if(now > elections[election].deadline && 
+        (getActiveMemberCount()/elections[election].votes.length)*100 > constitution.electionRules.winThreshold {
   			return 1;
   		} else {
   			return 0;
   		}
-  	}
+  }
 
   	//positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 4 == representative 
 	// 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
-  	function executeElectionMandate(uint election) returns (uint success){
+  	function executeElectionMandate(uint election) returns (bool success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
   			if(elections[election].role == 1){
@@ -306,86 +292,83 @@ contract Uniond {
   				elections[election].executed = true;
   				representativeCount--;
   			} else {
-  				return 0;
+  				return false;
   			}
-  			return 1;
+  			return true;
   		} else {
   			//fail case
-  			return 0;
+  			return false;
   		}
   	}
 
-  	function applyMember() returns (uint success){
+  function applyMember() returns (bool success){
   		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, false, false, false, false, false, 0, 0, 0, 0);
-  			return 1;
+  			member[msg.sender] = Member(now, 0, true, false, false, false, false, false, 0, 0, 0, 0);
+  			return true;
   		}
-  		return 0;
-  	}
+  		return false;
+  }
 
-//  	function addMember(address newMember) onlyMemberAdmin returns (uint success){
-  	function addMember(address newMember)  returns (uint success){
-  		if(true){
-//  		if(member[newMember].joinDate < now){
-  			members.push(newMember);
-  			member[newMember].isMember = true;
-  			member[newMember].renewalDate = now;
-  			return 1;
-  		}
-  		return 0;
-  	}
+  function addMember(address newMember) onlyMemberAdmin returns (bool success){
+  		if(member[newMember].exists){
+        members.push(newMember);
+        member[newMember].isMember = true;
+        member[newMember].renewalDate = now;
+        return true;
+      }
+      return false;
+  }
 
-  	function reviewMembers() returns (uint success){
+  	function reviewMembers() returns (bool success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].renewalDate > constitution.memberRules.subscriptionPeriod){
   				member[m].isMember = true;
   			} else {
   				member[m].isMember = false;
-  				//delete members[i]; -- this will stuff up review of special roles
   			}
   		}
-  		return 1;
+  		return true;
   	}
 
-  	function reviewChairs() returns (uint success){
+  	function reviewChairs() returns (bool success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].electedChairDate < constitution.electionRules.mandateDuration){
   				member[m].isChair = false;
   			}
   		}
-  		return 1;
+  		return true;
   	}
 
-  	function reviewMemberAdmins() returns (uint success){
+  	function reviewMemberAdmins() returns (bool success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].electedMemberAdminDate < constitution.electionRules.mandateDuration){
   				member[m].isMemberAdmin = false;
   			}
   		}
-  		return 1;
+  		return true;
   	}
 
-  	function reviewRepresentatives() returns (uint success){
+  	function reviewRepresentatives() returns (bool success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].electedRepresentativeDate < constitution.electionRules.mandateDuration){
   				member[m].isRepresentative = false;
   			}
   		}
-  		return 1;
+  		return true;
   	}
 
-  	function reviewTreasurers() returns (uint success){
+  	function reviewTreasurers() returns (bool success){
   		for(var i=0; i < members.length; i++){
   			address m = members[i];
   			if (now - member[m].electedTreasurerDate < constitution.electionRules.mandateDuration){
   				member[m].isTreasurer = false;
   			}
   		}
-  		return 1;
+  		return true;
   	}
   	
   	/*
@@ -402,14 +385,14 @@ contract Uniond {
   	}
   	*/
 
-  	function setJoiningFee(uint fee) onlyTreasurer returns (uint success){
+  	function setJoiningFee(uint fee) onlyTreasurer returns (bool success){
   		constitution.memberRules.joiningFee = fee;
-  		return 1;
+  		return true;
   	}
 
-  	function setSubscriptionPeriod(uint period) onlyTreasurer returns (uint success){
+  	function setSubscriptionPeriod(uint period) onlyTreasurer returns (bool success){
   		constitution.memberRules.subscriptionPeriod = period;
-  		return 1;
+  		return true;
   	}
 
   	function unionBalance() returns (uint balance) {
@@ -417,7 +400,7 @@ contract Uniond {
   	}
 
   	//create new issue
-	function addIssue(string description, uint deadline, uint budget) returns (uint success){
+	function addIssue(string description, uint deadline, uint budget) returns (bool success){
 	    issues[issueSerial] = Issue(msg.sender, description, false, now, 0, 0, deadline, budget);
 	    issueSerial++;
 	    //credit each member with a vote
@@ -426,7 +409,7 @@ contract Uniond {
 	      	votes[members[i]]++;
 	      }
 	    }
-	    return 1;
+	    return true;
 	}
 
     function selectAgenda(){
@@ -446,7 +429,7 @@ contract Uniond {
 
     //vote on an issue
     //q - should members who haven't paid subscription be able to vote with accumulated votes?
-  	function vote(uint issue, bool approve, uint amount) onlyMember returns (uint success){
+  	function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
 	    if(now < issues[issue].deadline && votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
 	      if(approve){
@@ -454,20 +437,20 @@ contract Uniond {
 	      } else {
 			issues[issue].disapprove += amount;
 	      }
-	      return 1;
+	      return true;
 	    }
-	    return 0;
+	    return false;
 	}
 
   	//transfer votes
   	//decentralised whip function
-	function transferVotes(address reciever, uint amount) returns (uint success){
+	function transferVotes(address reciever, uint amount) returns (bool success){
 	    if(votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
 	      votes[reciever] += amount;
-	      return 1;
+	      return true;
 	    }
-	    return 0;
+	    return false;
 	}
 
 	//get membership count
@@ -475,13 +458,63 @@ contract Uniond {
 	    count = members.length;
 	}
 
-	function newSpend(uint amount, address recipient) onlyTreasurer{
+  function getActiveMemberCount() returns (uint count){
+    uint count = 0;
+    for(var i=0; i < members.length; i++){
+      if(member[members[i]].isMember){
+        count ++;
+      }
+    }
+    return count;
+  }
+
+  function getTreasurerCount() returns (uint count){
+    uint count = 0;
+    for(var i=0; i < members.length; i++){
+      if(member[members[i]].isTreasurer){
+        count ++;
+      }
+    }
+    return count;
+  }
+
+  function getChairCount() returns (uint count){
+    uint count = 0;
+    for(var i=0; i < members.length; i++){
+      if(member[members[i]].isChair){
+        count ++;
+      }
+    }
+    return count;
+  }
+
+  function getMemberAdminCount() returns (uint count){
+    uint count = 0;
+    for(var i=0; i < members.length; i++){
+      if(member[members[i]].isMemberAdmin){
+        count ++;
+      }
+    }
+    return count;
+  }
+
+  function getRepresentativeCount() returns (uint count){
+    uint count = 0;
+    for(var i=0; i < members.length; i++){
+      if(member[members[i]].isRepresentative){
+        count ++;
+      }
+    }
+    return count;
+  }
+
+	function newSpend(uint amount, address recipient) onlyTreasurer returns (bool success){
 		address[] memory signatures;
-		spends[spendSerial] = Spend(recipient, amount, signatures, false);
-		spendSerial++;
+		spends.push(Spend(recipient, amount, signatures, false));
+    return true;
 	}
 
-	function signSpend(uint spend) onlyTreasurer returns (uint success){
+	function signSpend(uint spend) onlyTreasurer returns (bool success){
 		//check hasn't already signed;
 		bool hasSigned = false;
 		for(var i=0; i < spends[spend].signatures.length; i++){
@@ -492,35 +525,36 @@ contract Uniond {
 		}
 		if(!hasSigned){
 		 	spends[spend].signatures.push(msg.sender);
-		 	return 1;
+		 	return true;
 		} else {
-			return 0;
+			return false;
 		}
 	}
 
-	function executeSpend(uint spend) onlyTreasurer returns (uint success){
+	function executeSpend(uint spend) onlyTreasurer returns (bool success){
 		if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
 			spends[spend].recipient.send(spends[spend].amount);
 			spends[spend].spent = true;
 			//address reciever = spends[spend].recipient;
 			//payments[paymentSerial] =  Payment(msg.sender, reciever, reason, amount, now);
 			//paymentSerial++;
-			return 1;
+			return true;
 		} else {
-			return 0;
+			return false;
 		}
 	}
 
-	function newAmmendment(string reason, uint clause, uint value) onlyMember returns (uint success){
+	function newAmendment(string reason, uint clause, uint value) onlyMember returns (bool success){
 		uint duration = constitution.electionRules.duration;
-  		uint deadline = now + duration;
-  		ammendments[ammendmentSerial] = Ammendment(reason, clause, value, deadline, false, 0);
-  		ammendmentSerial++;
+  	uint deadline = now + duration;
+  	amendments[amendmentSerial] = amendment(reason, clause, value, deadline, false, 0);
+  	amendmentSerial++;
+    return true;
 	}
 
 	//todo set as supermajority-- 2/3;
-	function callAmmendment(uint ammendment) returns (uint result){
-  		if(now > ammendments[ammendment].deadline && ammendmentVotes[ammendment].length > (members.length / 2)){
+	function callAmendment(uint amendment) returns (uint result){
+  		if(now > amendments[amendment].deadline && amendmentVotes[amendment].length > (members.length / 2)){
   			return 1;
   		} else {
   			return 0;
@@ -564,65 +598,65 @@ contract Uniond {
     // StipendRules == 4_
     // SpendRules == 5_
     // TokenRules == 6_
-  	function executeAmmendmentMandate(uint ammendment) returns (uint success){
-  		if(!ammendments[ammendment].executed && callAmmendment(ammendment) == 1){
-  			if(ammendments[ammendment].clause == 11){
-  				constitution.generalRules.nbrTreasurer = ammendments[ammendment].value;
-  				ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 12){
-  				constitution.generalRules.nbrSecretary = ammendments[ammendment].value;
-  				ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 13){
-  				constitution.generalRules.nbrRepresentative = ammendments[ammendment].value;
-  				ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 14){
-  				constitution.generalRules.nbrMemberAdmin = ammendments[ammendment].value;
-  				ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 21){
-  			   constitution.electionRules.duration = ammendments[ammendment].value;
-  			   ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 22){
-  			   constitution.electionRules.winThreshold = ammendments[ammendment].value;
-  			   ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 23){
-  			   constitution.electionRules.mandateDuration = ammendments[ammendment].value;
-  			   ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 31){
-  			   constitution.memberRules.joiningFee = ammendments[ammendment].value;
-  			   ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 32){
-  			   constitution.memberRules.subscriptionPeriod = ammendments[ammendment].value;
-  			   ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 41){
-  			   constitution.stipendRules.stipendTreasurer = ammendments[ammendment].value;
-  			  	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 42){
-  			   	constitution.stipendRules.stipendChair = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 43){
-  				constitution.stipendRules.stipendRepresentative = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 44){
-  			   	constitution.stipendRules.stipendMemberAdmin = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 51){
-  			   	constitution.spendRules.threshold = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 52){
-  			   	constitution.spendRules.minSignatures = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 61){
-  			   	constitution.tokenRules.memberCredit = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 62){
-  			   	constitution.tokenRules.canSetSalary = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 63){
-  			   	constitution.tokenRules.salaryCap = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
-  			} else if (ammendments[ammendment].clause == 64){
-  			   	constitution.tokenRules.salaryPeriod = ammendments[ammendment].value;
-  			   	ammendments[ammendment].executed = true;
+  	function executeamendmentMandate(uint amendment) returns (uint success){
+  		if(!amendments[amendment].executed && callamendment(amendment) == 1){
+  			if(amendments[amendment].clause == 11){
+  				constitution.generalRules.nbrTreasurer = amendments[amendment].value;
+  				amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 12){
+  				constitution.generalRules.nbrSecretary = amendments[amendment].value;
+  				amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 13){
+  				constitution.generalRules.nbrRepresentative = amendments[amendment].value;
+  				amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 14){
+  				constitution.generalRules.nbrMemberAdmin = amendments[amendment].value;
+  				amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 21){
+  			   constitution.electionRules.duration = amendments[amendment].value;
+  			   amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 22){
+  			   constitution.electionRules.winThreshold = amendments[amendment].value;
+  			   amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 23){
+  			   constitution.electionRules.mandateDuration = amendments[amendment].value;
+  			   amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 31){
+  			   constitution.memberRules.joiningFee = amendments[amendment].value;
+  			   amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 32){
+  			   constitution.memberRules.subscriptionPeriod = amendments[amendment].value;
+  			   amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 41){
+  			   constitution.stipendRules.stipendTreasurer = amendments[amendment].value;
+  			  	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 42){
+  			   	constitution.stipendRules.stipendChair = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 43){
+  				constitution.stipendRules.stipendRepresentative = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 44){
+  			   	constitution.stipendRules.stipendMemberAdmin = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 51){
+  			   	constitution.spendRules.threshold = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 52){
+  			   	constitution.spendRules.minSignatures = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 61){
+  			   	constitution.tokenRules.memberCredit = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 62){
+  			   	constitution.tokenRules.canSetSalary = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 63){
+  			   	constitution.tokenRules.salaryCap = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
+  			} else if (amendments[amendment].clause == 64){
+  			   	constitution.tokenRules.salaryPeriod = amendments[amendment].value;
+  			   	amendments[amendment].executed = true;
   			} else {
   				return 0;
   			}
