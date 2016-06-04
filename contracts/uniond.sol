@@ -15,10 +15,10 @@ contract Uniond {
 	uint public spendSerial;
 	uint public ammendmentSerial;
 	
-	uint public treasurerCount;
-	uint public chairCount;
-	uint public memberAdminCount;
-	uint public representativeCount;
+	//uint public treasurerCount;
+	//uint public chairCount;
+	//uint public memberAdminCount;
+	//uint public representativeCount;
 	
 	uint public tokenSupply;
 	address[] public members;
@@ -68,81 +68,80 @@ contract Uniond {
 
 	struct Election {
 		address owner;
-	    address nominee;
-	    uint role;
+	  address nominee;
+	  uint role;
 	 	uint deadline;
-	    bool executed;
-	    uint totalVoters;  //TODO set after deadline is passed
+	  bool executed;
+	  uint totalVoters;  //TODO set after deadline is passed
 	}
 
 	struct Issue {
-	    address owner;
-	    string description;
-	    bool visible;
-	    uint date;
-	    uint approve;
-	    uint disapprove;
-	    uint deadline;
-	    uint budget;
+	  address owner;
+	  string description;
+	  bool visible;
+	  uint date;
+	  uint approve;
+	  uint disapprove;
+	  uint deadline;
+	  uint budget;
 	}
 
 	struct Member {
-	    uint joinDate;
-	    uint renewalDate;
-	    bool isMember;
-	    bool isMemberAdmin;
-	    bool isTreasurer;
-	    bool isRepresentative;
-	    bool isChair;
-	    uint electedMemberAdminDate;
-	    uint electedTreasurerDate;
-	    uint electedRepresentativeDate;
-	    uint electedChairDate;
-	    uint salary;
-
+	  uint joinDate;
+	  uint renewalDate;
+	  bool isMember;
+	  bool isMemberAdmin;
+	  bool isTreasurer;
+	  bool isRepresentative;
+	  bool isChair;
+	  uint electedMemberAdminDate;
+	  uint electedTreasurerDate;
+	  uint electedRepresentativeDate;
+	  uint electedChairDate;
+	  uint salary;
 	}
 
 	struct SpendRules {
-        uint threshold; // number of signature required for spending more than 10 eth -- how will this work?
-        uint minSignatures; //
-    }
+    uint threshold; // number of signature required for spending more than 10 eth -- how will this work?
+    uint minSignatures; //
+  }
 
-    struct GeneralRules {
-        uint nbrTreasurer;
-        uint nbrSecretary;
-        uint nbrRepresentative;
-        uint nbrMemberAdmin;
-    }
+  struct GeneralRules {
+    uint nbrTreasurer;
+    uint nbrSecretary;
+    uint nbrRepresentative;
+    uint nbrMemberAdmin;
+  }
 
 	struct ElectionRules {
-        uint duration;
-        uint winThreshold;
-        uint mandateDuration;
-    }
+    uint duration;
+    uint winThreshold;
+    uint mandateDuration;
+  }
 
-  	struct MemberRules {
-    	uint joiningFee;
-    	uint subscriptionPeriod;
-   	}
+  struct MemberRules {
+    uint joiningFee;
+    uint subscriptionPeriod;
+  }
 
-    struct IssueRules {
-        uint minApprovalRate;
-        uint minConsultationLevel;
-    }
+  struct IssueRules {
+    uint minApprovalRate;
+    uint minConsultationLevel;
+  }
 
-    struct StipendRules {
-        uint stipendTreasurer;
-        uint stipendChair;
-        uint stipendRepresentative;
-        uint stipendMemberAdmin;
-    }
+  struct StipendRules {
+    uint stipendTreasurer;
+    uint stipendChair;
+    uint stipendRepresentative;
+    uint stipendMemberAdmin;
+  }
 
-    struct TokenRules {
-    	uint memberCredit;
-    	uint canSetSalary; //0= no, >1 = yes
-    	uint salaryCap;
-    	uint salaryPeriod;
-    }
+  struct TokenRules {
+    uint memberCredit;
+    uint canSetSalary; //0= no, >1 = yes
+    uint salaryCap;
+    uint salaryPeriod;
+  }
 
 	struct Constitution {
 		GeneralRules generalRules;
@@ -150,9 +149,9 @@ contract Uniond {
 		MemberRules memberRules;
 		StipendRules stipendRules;
 		IssueRules issueRules;
-        SpendRules spendRules;
-        TokenRules tokenRules;
-    }
+    SpendRules spendRules;
+    TokenRules tokenRules;
+  }
 
 	//constructor
  	function Uniond(){
@@ -223,7 +222,7 @@ contract Uniond {
 //function payDividend(uint amount) returns (uint success){}
 
   	function addElection(address nominee, uint position) returns (uint success){
-  	    uint duration = constitution.electionRules.duration;
+  	  uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
   		elections[electionSerial] = Election(msg.sender, nominee, position, deadline, false, 0);
   		electionSerial++;
