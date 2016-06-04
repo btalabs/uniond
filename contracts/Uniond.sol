@@ -4,7 +4,6 @@
 // TODO  renew membership function
 // 	payStipend - may need new data struct
 //	reviewOffice - put time limit on office 
-// add and revoke endorsements
 
 contract Uniond {
 	
@@ -98,7 +97,7 @@ contract Uniond {
 
   struct GeneralRules {
     uint nbrTreasurer;
-    uint nbrSecretary;
+    uint nbrChair;
     uint nbrRepresentative;
     uint nbrMemberAdmin;
   }
@@ -252,17 +251,17 @@ contract Uniond {
   	function executeElectionMandate(uint election) returns (bool success){
   		if(!elections[election].executed && callElection(election) == 1){
   			address nominee = elections[election].nominee;
-  			if(elections[election].role == 1){
+  			if(elections[election].role == 1 && getTreasurerCount() < constitution.generalRules.nbrTreasurer){
   				//add treasurer
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
 			    member[nominee].electedTreasurerDate = now;
-  			} else if (elections[election].role == 2){
+  			} else if (elections[election].role == 2 && getMemberAdminCount() < constitution.generalRules.nbrMemberAdmin){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
 		   	   	member[nominee].electedMemberAdminDate = now;
-  			} else if (elections[election].role == 3) {
+  			} else if (elections[election].role == 3 && getChairCount() < constitution.generalRules.nbrChair) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
@@ -279,7 +278,7 @@ contract Uniond {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
-  			} else if (elections[election].role == 4) {
+  			} else if (elections[election].role == 4 && getRepresentativeCount() < constitution.generalRules.nbrRepresentative) {
   				//add representative
   				member[nominee].isRepresentative = true;
   				elections[election].executed = true;
@@ -303,7 +302,10 @@ contract Uniond {
         address[] memory endorsements;
   			member[msg.sender] = Member(now, 0, true, false, false, false, false, false, 0, 0, 0, 0, 0, endorsements);
   			return true;
-  		}
+  		} else if (msg.value >= constitution.memberRules.joiningFee && member[msg.sender].exists){
+        member[msg.sender].isMember = true;
+        member[msg.sender].renewalDate = now;
+      }
   		return false;
   }
 
@@ -426,7 +428,7 @@ contract Uniond {
 
     //vote on an issue
     //q - should members who haven't paid subscription be able to vote with accumulated votes?
-  	function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
+  function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
 	    if(now < issues[issue].deadline && votes[msg.sender] >= amount){
 	      votes[msg.sender] -= amount;
 	      if(approve){
@@ -596,13 +598,13 @@ contract Uniond {
     // StipendRules == 4_
     // SpendRules == 5_
     // TokenRules == 6_
-  	function executeamendmentMandate(uint amendment) returns (uint success){
+  	function executeAmendmentMandate(uint amendment) returns (uint success){
   		if(!amendments[amendment].executed && callAmendment(amendment) == 1){
   			if(amendments[amendment].clause == 11){
   				constitution.generalRules.nbrTreasurer = amendments[amendment].value;
   				amendments[amendment].executed = true;
   			} else if (amendments[amendment].clause == 12){
-  				constitution.generalRules.nbrSecretary = amendments[amendment].value;
+  				constitution.generalRules.nbrChair = amendments[amendment].value;
   				amendments[amendment].executed = true;
   			} else if (amendments[amendment].clause == 13){
   				constitution.generalRules.nbrRepresentative = amendments[amendment].value;
@@ -685,5 +687,38 @@ contract Uniond {
   			return false;
   		}
   	}
+
+  function endorseMember(address m) onlyMember returns (bool success){
+    //check hasn't already endorsed member
+    bool hasEndorsed = false;
+    for(var i = 0; i < member[m].endorsements.length; i++){
+      if(member[m].endorsements[i] == msg.sender){
+        hasEndorsed = true;
+        break;
+      }
+    }
+    if(!hasEndorsed){
+      member[m].endorsements.push(msg.sender);
+      return true;
+    }
+    return false;
+  }
+
+  function revokeEndorsement(address m) onlyMember returns (bool success){
+    bool hasEndorsed = false;
+    uint index = 0;
+    for(var i = 0; i < member[m].endorsements.length; i++){
+      if(member[m].endorsements[i] == msg.sender){
+        hasEndorsed = true;
+        index = i;
+        break;
+      }
+    }
+    if(hasEndorsed){
+      delete member[m].endorsements[index];
+      return true;
+    }
+    return false;
+  }
 
 }
