@@ -4,6 +4,7 @@
 // TODO  renew membership function
 // 	payStipend - may need new data struct
 //	reviewOffice - put time limit on office 
+// add and revoke endorsements
 
 contract Uniond {
 	
@@ -87,6 +88,7 @@ contract Uniond {
 	  uint electedRepresentativeDate;
 	  uint electedChairDate;
 	  uint salary;
+    address[] endorsements;
 	}
 
 	struct SpendRules {
@@ -105,6 +107,10 @@ contract Uniond {
     uint duration;
     uint winThreshold;
     uint mandateDuration;
+  }
+
+  struct AmendmentRules {
+    uint winThreshold;
   }
 
   struct MemberRules {
@@ -139,18 +145,15 @@ contract Uniond {
 		IssueRules issueRules;
     SpendRules spendRules;
     TokenRules tokenRules;
+    AmendmentRules amendmentRules;
   }
 
 	//constructor
  	function Uniond(){
-	    member[msg.sender] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 0);
+      address[] memory endorsements;
+	    member[msg.sender] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 0, endorsements);
 	    members.push(msg.sender);
 	    votes[msg.sender] = 0;
-	    issueSerial = 0;
-	    electionSerial = 0;
-	    paymentSerial = 0;
-	    spendSerial = 0;
-	    amendmentSerial = 0;
 	    constitution = Constitution(
 	    				GeneralRules(1, 1, 1, 1),
 	    				ElectionRules(1, 1, 1),
@@ -158,7 +161,8 @@ contract Uniond {
 	    				StipendRules(1, 1, 1, 1),
 	    				IssueRules(10,34),
 	    				SpendRules(1, 1),
-	    				TokenRules(1000, 0, 1000, 100000)
+	    				TokenRules(1000, 0, 1000, 100000),
+              AmendmentRules(60)
 	    				);
 	}
 
@@ -212,7 +216,8 @@ contract Uniond {
   function addElection(address nominee, uint position) returns (bool success){
   	  uint duration = constitution.electionRules.duration;
   		uint deadline = now + duration;
-  		elections.push(Election(msg.sender, nominee, position, deadline, false, 0));
+      address[] memory votes;
+  		elections.push(Election(msg.sender, nominee, position, deadline, false, votes));
   		return true;
   }
 
@@ -235,7 +240,7 @@ contract Uniond {
 
   function callElection(uint election) returns (uint result){ // rename to triggerElection ?
   		if(now > elections[election].deadline && 
-        (getActiveMemberCount()/elections[election].votes.length)*100 > constitution.electionRules.winThreshold {
+        ((getActiveMemberCount() / elections[election].votes.length)*100) > constitution.electionRules.winThreshold){
   			return 1;
   		} else {
   			return 0;
@@ -252,45 +257,37 @@ contract Uniond {
 			    member[nominee].isTreasurer = true;
 			    elections[election].executed = true;
 			    member[nominee].electedTreasurerDate = now;
-			    treasurerCount++;
   			} else if (elections[election].role == 2){
   			   	//add memberAdmin 
   			   	member[nominee].isMemberAdmin = true;
 		   	   	elections[election].executed = true;
 		   	   	member[nominee].electedMemberAdminDate = now;
-		   	   	memberAdminCount++;
   			} else if (elections[election].role == 3) {
   				//add chair
   				member[nominee].isChair = true;
   				elections[election].executed = true;
   				member[nominee].electedChairDate = now;
-  				chairCount++;
   			} else if (elections[election].role == 5) {
   				//revoke treasurer
   				member[nominee].isTreasurer = false;
   				elections[election].executed = true;
-  				treasurerCount--;
   			} else if (elections[election].role == 6) {
   				//revoke memberAdmin
   				member[nominee].isMemberAdmin = false;
   				elections[election].executed = true;
-  				memberAdminCount--;
   			} else if (elections[election].role == 7) {
   				//revoke chair
   				member[nominee].isChair = false;
   				elections[election].executed = true;
-  				chairCount--;
   			} else if (elections[election].role == 4) {
   				//add representative
   				member[nominee].isRepresentative = true;
   				elections[election].executed = true;
   				member[nominee].electedRepresentativeDate = now;
-  				representativeCount++;
   			} else if (elections[election].role == 8) {
   				//revoke representative
   				member[nominee].isRepresentative = false;
   				elections[election].executed = true;
-  				representativeCount--;
   			} else {
   				return false;
   			}
@@ -302,8 +299,9 @@ contract Uniond {
   	}
 
   function applyMember() returns (bool success){
-  		if(msg.value >= constitution.memberRules.joiningFee){
-  			member[msg.sender] = Member(now, 0, true, false, false, false, false, false, 0, 0, 0, 0);
+  		if(msg.value >= constitution.memberRules.joiningFee && !member[msg.sender].exists){
+        address[] memory endorsements;
+  			member[msg.sender] = Member(now, 0, true, false, false, false, false, false, 0, 0, 0, 0, 0, endorsements);
   			return true;
   		}
   		return false;
@@ -401,8 +399,7 @@ contract Uniond {
 
   	//create new issue
 	function addIssue(string description, uint deadline, uint budget) returns (bool success){
-	    issues[issueSerial] = Issue(msg.sender, description, false, now, 0, 0, deadline, budget);
-	    issueSerial++;
+	    issues.push(Issue(msg.sender, description, false, now, 0, 0, deadline, budget));
 	    //credit each member with a vote
 	    for(var i=0; i < members.length; i++){
 	      if(member[members[i]].isMember){
@@ -459,7 +456,7 @@ contract Uniond {
 	}
 
   function getActiveMemberCount() returns (uint count){
-    uint count = 0;
+    count = 0;
     for(var i=0; i < members.length; i++){
       if(member[members[i]].isMember){
         count ++;
@@ -469,7 +466,7 @@ contract Uniond {
   }
 
   function getTreasurerCount() returns (uint count){
-    uint count = 0;
+    count = 0;
     for(var i=0; i < members.length; i++){
       if(member[members[i]].isTreasurer){
         count ++;
@@ -479,7 +476,7 @@ contract Uniond {
   }
 
   function getChairCount() returns (uint count){
-    uint count = 0;
+    count = 0;
     for(var i=0; i < members.length; i++){
       if(member[members[i]].isChair){
         count ++;
@@ -489,7 +486,7 @@ contract Uniond {
   }
 
   function getMemberAdminCount() returns (uint count){
-    uint count = 0;
+    count = 0;
     for(var i=0; i < members.length; i++){
       if(member[members[i]].isMemberAdmin){
         count ++;
@@ -499,7 +496,7 @@ contract Uniond {
   }
 
   function getRepresentativeCount() returns (uint count){
-    uint count = 0;
+    count = 0;
     for(var i=0; i < members.length; i++){
       if(member[members[i]].isRepresentative){
         count ++;
@@ -547,14 +544,15 @@ contract Uniond {
 	function newAmendment(string reason, uint clause, uint value) onlyMember returns (bool success){
 		uint duration = constitution.electionRules.duration;
   	uint deadline = now + duration;
-  	amendments[amendmentSerial] = amendment(reason, clause, value, deadline, false, 0);
-  	amendmentSerial++;
+    address[] memory votes;
+  	amendments.push(Amendment(reason, clause, value, deadline, false, votes));
     return true;
 	}
 
 	//todo set as supermajority-- 2/3;
 	function callAmendment(uint amendment) returns (uint result){
-  		if(now > amendments[amendment].deadline && amendmentVotes[amendment].length > (members.length / 2)){
+  		if(now > amendments[amendment].deadline && 
+        ((getActiveMemberCount() / amendments[amendment].votes.length)*100) > constitution.amendmentRules.winThreshold){
   			return 1;
   		} else {
   			return 0;
@@ -599,7 +597,7 @@ contract Uniond {
     // SpendRules == 5_
     // TokenRules == 6_
   	function executeamendmentMandate(uint amendment) returns (uint success){
-  		if(!amendments[amendment].executed && callamendment(amendment) == 1){
+  		if(!amendments[amendment].executed && callAmendment(amendment) == 1){
   			if(amendments[amendment].clause == 11){
   				constitution.generalRules.nbrTreasurer = amendments[amendment].value;
   				amendments[amendment].executed = true;
