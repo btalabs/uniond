@@ -10,9 +10,10 @@ contract Uniond {
   Constitution constitution;
   
   uint public tokenSupply;
-  mapping(address => uint) public votes;
   mapping(address => uint) public tokens;
 
+  mapping(address => uint) public votes;
+  
   address[] public members;
   mapping(address => Member) public member;
 
@@ -419,7 +420,7 @@ contract Uniond {
   }
 
     function selectAgenda(){
-    var totalVoters=getMemberCount();
+    var totalVoters = getActiveMemberCount();
         for(var i=0; i < issues.length; i++){
         var percentVoters = ((issues[i].approve+issues[i].disapprove)/totalVoters)*100;
         var percentApproval = (issues[i].approve/issues[i].disapprove)*100;
@@ -537,13 +538,11 @@ contract Uniond {
     }
   }
 
-  function executeSpend(uint spend) onlyTreasurer returns (bool success){
+  function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
     if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution.spendRules.minSignatures){
       spends[spend].recipient.send(spends[spend].amount);
       spends[spend].spent = true;
-      //address reciever = spends[spend].recipient;
-      //payments[paymentSerial] =  Payment(msg.sender, reciever, reason, amount, now);
-      //paymentSerial++;
+      payments.push(Payment(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now));
       return true;
     } else {
       return false;
