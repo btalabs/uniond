@@ -152,7 +152,6 @@ contract Uniond {
       address[] memory endorsements;
       member[msg.sender] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 1000, endorsements);
       members.push(msg.sender);
-      votes[msg.sender] = 0;
       tokenPayments.push(TokenPayments(0, 0));
       constitution = Constitution(
               GeneralRules(1, 1, 1, 1),
@@ -749,6 +748,15 @@ contract Uniond {
       return true;
     }
     return false;
+  }
+
+  //HACKY TEST FUNCTIONS
+
+  function addMemberTest(address nominee) returns (bool success){
+    address[] memory endorsements;
+    member[nominee] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 1000, endorsements);
+    members.push(nominee);
+    return true;
   }
 
 }
