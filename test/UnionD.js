@@ -5,9 +5,11 @@ contract('Uniond', function(accounts)
   {
     var uniond = Uniond.deployed();
 
+    var account_one = accounts[0];
+
     //console.log(uniond);
     
-    uniond.addMemberTest.call(accounts[0]).then(function(result)
+    uniond.addMemberTest.call(account_one).then(function(result)
     {
       console.log("add member = ", result);
       assert.equal(result, true, "member wasn't added");
@@ -20,7 +22,7 @@ contract('Uniond', function(accounts)
     
     uniond.member.call(accounts[0]).then(function(member)
     {
-      console.log("check member = ", member[2]);
+      console.log("check member = ", member);
       assert.equal(member[2], true, "member doens't exist");
     }).then(done).catch(done);
   });

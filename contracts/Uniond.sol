@@ -150,8 +150,9 @@ contract Uniond {
   //constructor
   function Uniond(){
       address[] memory endorsements;
-      member[msg.sender] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 1000, endorsements);
-      members.push(msg.sender);
+      //replace msg.sender for tx.origin
+      member[tx.origin] = Member(now, now, true, true, true, true, true, true, now, now, now, now, 1000, endorsements);
+      members.push(tx.origin);
       tokenPayments.push(TokenPayments(0, 0));
       constitution = Constitution(
               GeneralRules(1, 1, 1, 1),
