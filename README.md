@@ -32,14 +32,6 @@ Members who have the power to add new members to the UnionD.
 
 Members who have the power to spend UnionD funds (ether).
 
-##Representative(s)
-
-Members who have the power to speak on behalf of the UnionD.
-
-##Chair(s)
-
-Members who have the power to set the agenda of issues.
-
 #Processes
 
 ##Constitution (settings)

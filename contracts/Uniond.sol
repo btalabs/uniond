@@ -1,9 +1,7 @@
-//License: GPL
-//Author: @hugooconnor @arkhh
-//Thanks to @XertroV for @voteFlux issue based direct democracy
-// TODO  renew membership function
-//  payStipend - may need new data struct
-//  reviewOffice - put time limit on office 
+/// @title Uniond -- unions, decentralised
+/// @author hugooconnor, arkhh
+
+//consider case where all members are 'locked out'
 
 contract Uniond {
 
@@ -62,7 +60,7 @@ contract Uniond {
     uint role;
     uint deadline;
     bool executed;
-    address[] votes;  //TODO set after deadline is passed
+    address[] votes;
   }
 
   struct Issue {
@@ -114,6 +112,10 @@ contract Uniond {
       _
   }
 
+  /// @notice Creates a new election object
+  /// @param nominee person up for election or removal from power
+  /// @param position what role or removal from role they are up for
+  /// @return success if it is successful
   function addElection(address nominee, uint position) returns (bool success){
       uint duration = constitution[1];
       uint deadline = now + duration;
@@ -122,6 +124,9 @@ contract Uniond {
       return true;
   }
 
+  /// @notice Members can vote on an election
+  /// @param election which election they are voting on
+  /// @return success if their vote was cast
   function voteElection(uint election) returns (bool success){
       if(now < elections[election].deadline && member[msg.sender].exists && member[msg.sender].isMember){
          bool hasVoted = false;
@@ -139,7 +144,10 @@ contract Uniond {
       return false;
   }
 
-  function callElection(uint election) returns (bool result){ // rename to triggerElection ?
+  /// @notice Determines the result of an election
+  /// @param election which election the call is on
+  /// @return result if successful or not
+  function callElection(uint election) returns (bool result){
       if(now > elections[election].deadline && 
         ((getActiveMemberCount() / elections[election].votes.length)*100) > constitution[2]){
         return true;
@@ -149,7 +157,10 @@ contract Uniond {
   }
 
     //positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 4 == representative 
-  // 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
+    // 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
+    /// @notice Execute the mandate of an election
+    /// @param election which election is it
+    /// @return success if the mandate is executed
     function executeElectionMandate(uint election) returns (bool success){
       if(!elections[election].executed && callElection(election)){
         address nominee = elections[election].nominee;
@@ -181,6 +192,8 @@ contract Uniond {
       }
     }
 
+  /// @notice Apply to be a member - must pay joiningFee
+  /// @return success if the joiningFee is paid
   function applyMember() returns (bool success){
       if(msg.value >= constitution[5] && !member[msg.sender].exists){
         member[msg.sender] = Member(now, 0, true, false, false, false, 0, 0, 0);
@@ -192,6 +205,9 @@ contract Uniond {
       return false;
   }
 
+  /// @notice add new member -- must pay joiningFee
+  /// @param newMember address of the new member
+  /// @return success if the new member is added
   function addMember(address newMember) onlyMemberAdmin returns (bool success){
       if(member[newMember].exists){
         members.push(newMember);
@@ -202,21 +218,20 @@ contract Uniond {
       return false;
   }
 
-    function setJoiningFee(uint fee) onlyTreasurer returns (bool success){
+  function setJoiningFee(uint fee) onlyTreasurer returns (bool success){
       constitution[5] = fee;
       return true;
-    }
+  }
 
-    function setSubscriptionPeriod(uint period) onlyTreasurer returns (bool success){
+  function setSubscriptionPeriod(uint period) onlyTreasurer returns (bool success){
       constitution[6] = period;
       return true;
-    }
+  }
 
-    function unionBalance() constant returns (uint balance) {
+  function unionBalance() constant returns (uint balance) {
       return this.balance;
-    }
+  }
 
-  //create new issue
   function addIssue(string description, uint deadline) returns (bool success){
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
       //credit each member with a vote
@@ -228,23 +243,20 @@ contract Uniond {
       return true;
   }
 
-    //vote on an issue
-    //q - should members who haven't paid subscription be able to vote with accumulated votes?
+  
   function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
       if(now < issues[issue].deadline && votes[msg.sender] >= amount){
         votes[msg.sender] -= amount;
         if(approve){
-      issues[issue].approve += amount;
+          issues[issue].approve += amount;
         } else {
-      issues[issue].disapprove += amount;
+          issues[issue].disapprove += amount;
         }
         return true;
       }
       return false;
   }
 
-    //transfer votes
-    //decentralised whip function
   function transferVotes(address reciever, uint amount) returns (bool success){
       if(votes[msg.sender] >= amount){
         votes[msg.sender] -= amount;
@@ -271,7 +283,6 @@ contract Uniond {
   }
 
   function signSpend(uint spend) onlyTreasurer returns (bool success){
-    //check hasn't already signed;
     bool hasSigned = false;
     for(uint i=0; i < spends[spend].signatures.length; i++){
       if(msg.sender == spends[spend].signatures[i]){
@@ -306,7 +317,6 @@ contract Uniond {
     return true;
   }
 
-  //todo set as supermajority-- 2/3;
   function callAmendment(uint amendment) returns (bool result){
       if(now > amendments[amendment].deadline && 
         ((getActiveMemberCount() / amendments[amendment].votes.length)*100) > constitution[4]){
@@ -316,7 +326,7 @@ contract Uniond {
       }
     }
 
-    function executeAmendmentMandate(uint amendment) returns (bool success){
+  function executeAmendmentMandate(uint amendment) returns (bool success){
       if(!amendments[amendment].executed && callAmendment(amendment)){
         constitution[amendments[amendment].clause] = amendments[amendment].value;
         amendments[amendment].executed = true;
@@ -325,15 +335,15 @@ contract Uniond {
       return false;
     }
 
-    function totalSupply() constant returns (uint256 supply){
+  function totalSupply() constant returns (uint256 supply){
       return tokenSupply;
     }
 
-    function balanceOf(address _owner) constant returns (uint256 balance){
+  function balanceOf(address _owner) constant returns (uint256 balance){
       return tokens[_owner];
     }
 
-    function transfer(address _to, uint256 _value) returns (bool success){
+  function transfer(address _to, uint256 _value) returns (bool success){
       if(tokens[msg.sender] >= _value){
         tokens[msg.sender] -= _value;
         tokens[_to] += _value;
@@ -366,5 +376,4 @@ contract Uniond {
     }
     return false;
   }
-
 }
