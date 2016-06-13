@@ -1,7 +1,7 @@
 /// @title Uniond -- unions, decentralised
 /// @author hugooconnor, arkhh
 
-//consider case where all members are 'locked out'
+// TODO: consider case where all members are 'locked out'
 
 contract Uniond {
 
@@ -218,20 +218,32 @@ contract Uniond {
       return false;
   }
 
+  /// @notice treasurers can set the joiningFee
+  /// @param fee the amount to set
+  /// @return success if the fee is set
   function setJoiningFee(uint fee) onlyTreasurer returns (bool success){
       constitution[5] = fee;
       return true;
   }
 
+  /// @notice treasurers can set the subscriptionPeriod
+  /// @param period the duration to set
+  /// @return success if the subscriptionPeriod is set
   function setSubscriptionPeriod(uint period) onlyTreasurer returns (bool success){
       constitution[6] = period;
       return true;
   }
 
+  /// @notice get the union contract's ether balance
+  /// @return balance the balance of the contract
   function unionBalance() constant returns (uint balance) {
       return this.balance;
   }
 
+  /// @notice create new issue, give all members a vote
+  /// @param description what the issue is about
+  /// @param deadline when the issue is called
+  /// @return success if the issue is set
   function addIssue(string description, uint deadline) returns (bool success){
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
       //credit each member with a vote
@@ -243,7 +255,11 @@ contract Uniond {
       return true;
   }
 
-  
+  /// @notice vote on a given issue n times
+  /// @param issue which issue it is
+  /// @param approve whether it is for or against the issue
+  /// @param amount how many votes to cast
+  /// @return success if the votes are cast
   function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
       if(now < issues[issue].deadline && votes[msg.sender] >= amount){
         votes[msg.sender] -= amount;
@@ -257,6 +273,10 @@ contract Uniond {
       return false;
   }
 
+  /// @notice transfer votes to a proxy
+  /// @param reciever who is the proxy
+  /// @param amount how many votes to give them
+  /// @return success if the votes are transfered
   function transferVotes(address reciever, uint amount) returns (bool success){
       if(votes[msg.sender] >= amount){
         votes[msg.sender] -= amount;
@@ -266,6 +286,8 @@ contract Uniond {
       return false;
   }
 
+  /// @notice get a count of the active members
+  /// @return count of the active members
   function getActiveMemberCount() constant returns (uint count){
     count = 0;
     for(uint i=0; i < members.length; i++){
@@ -276,12 +298,19 @@ contract Uniond {
     return count;
   }
 
+  /// @notice create new spend object
+  /// @param amount how much to spend
+  /// @param recipient who is to recieve funds
+  /// @return success if the object is created
   function newSpend(uint amount, address recipient) onlyTreasurer returns (bool success){
     address[] memory signatures;
     spends.push(Spend(recipient, amount, signatures, false));
     return true;
   }
 
+  /// @notice sign spend object
+  /// @param spend to sign
+  /// @return success if the signature is appended
   function signSpend(uint spend) onlyTreasurer returns (bool success){
     bool hasSigned = false;
     for(uint i=0; i < spends[spend].signatures.length; i++){
@@ -298,6 +327,10 @@ contract Uniond {
     }
   }
 
+  /// @notice execute spend object
+  /// @param spend which spend object
+  /// @param reason for the spend
+  /// @return success if the spend is spent
   function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
     if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
       spends[spend].recipient.send(spends[spend].amount);
@@ -309,6 +342,11 @@ contract Uniond {
     }
   }
 
+  /// @notice create new amendment object
+  /// @param reason for the amendment
+  /// @param clause which constitution setting to amendment
+  /// @param value what to change it to
+  /// @return success if the amendment is created
   function newAmendment(string reason, uint clause, uint value) onlyMember returns (bool success){
     uint duration = constitution[1];
     uint deadline = now + duration;
@@ -317,6 +355,9 @@ contract Uniond {
     return true;
   }
 
+  /// @notice call an amendment 
+  /// @param amendment which to call
+  /// @return result true if it is past
   function callAmendment(uint amendment) returns (bool result){
       if(now > amendments[amendment].deadline && 
         ((getActiveMemberCount() / amendments[amendment].votes.length)*100) > constitution[4]){
@@ -326,6 +367,9 @@ contract Uniond {
       }
     }
 
+  /// @notice execute amendment object
+  /// @param amendment which to execute
+  /// @return success if amendment is executed
   function executeAmendmentMandate(uint amendment) returns (bool success){
       if(!amendments[amendment].executed && callAmendment(amendment)){
         constitution[amendments[amendment].clause] = amendments[amendment].value;
@@ -335,14 +379,23 @@ contract Uniond {
       return false;
     }
 
+  /// @notice get supply of tokenSupply
+  /// @return supply of tokens
   function totalSupply() constant returns (uint256 supply){
       return tokenSupply;
     }
 
+  /// @notice get token balance
+  /// @param _owner whose account we are checking
+  /// @return balance how many tokens they have
   function balanceOf(address _owner) constant returns (uint256 balance){
       return tokens[_owner];
     }
 
+  /// @notice transfer tokens
+  /// @param _to who to transfer to
+  /// @param _value how much to transfer
+  /// @return success if the transfer happened
   function transfer(address _to, uint256 _value) returns (bool success){
       if(tokens[msg.sender] >= _value){
         tokens[msg.sender] -= _value;
@@ -353,6 +406,9 @@ contract Uniond {
       }
     }
 
+  /// @notice set member salary
+  /// @param amount to set
+  /// @return success if the amount is set
   function setSalary(uint amount) returns (bool success){
     if(constitution[7] > 0 && amount <= constitution[8] && member[msg.sender].exists){
       member[msg.sender].salary = amount;
@@ -361,6 +417,8 @@ contract Uniond {
     return false;
   }
 
+  /// @notice pay everyone their salary
+  /// @return success if the payment is made
   function paySalary() returns (bool success){
     if(now - tokenPayments[tokenPayments.length - 1].paymentDate >= constitution[9]) {
       uint amountPaid = 0;
