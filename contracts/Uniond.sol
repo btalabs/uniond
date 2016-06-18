@@ -2,12 +2,15 @@
 /// @author hugooconnor, arkhh
 
 // TODO: consider case where all members are 'locked out'
+// consider out of gas error for looping functions -- ~ 500 person limit on size of uniond with current implementation?
+// replace for loops with some smarter thinking
 
 contract Uniond {
 
   uint[10] public constitution;
 
   address[] public members;
+  uint public activeMembers;
   mapping(address => Member) public member;
 
   struct Member {
@@ -20,6 +23,8 @@ contract Uniond {
     uint electedMemberAdminDate;
     uint electedTreasurerDate;
     uint salary;
+    uint spentVotes; //numVotes = issues.length + delegatedVotes - spentVotes;
+    uint delegatedVotes;
   }
   
   uint tokenSupply;
@@ -36,6 +41,8 @@ contract Uniond {
   struct TokenPayments {
     uint amountPaid;
     uint paymentDate;
+    uint paymentsMade;
+    mapping(address => bool) beenPaid;
   }
 
   struct Amendment {
@@ -45,6 +52,7 @@ contract Uniond {
     uint deadline;
     bool executed;
     address[] votes;
+    mapping(address => bool) hasVoted;
   }
 
   struct Spend{
@@ -52,6 +60,7 @@ contract Uniond {
     uint amount;
     address[] signatures;
     bool spent;
+    mapping(address => bool) hasSigned;
   }
 
   struct Election {
@@ -61,6 +70,7 @@ contract Uniond {
     uint deadline;
     bool executed;
     address[] votes;
+    mapping(address => bool) hasVoted;
   }
 
   struct Issue {
@@ -73,12 +83,17 @@ contract Uniond {
   }
 
   event Payment(address spender, address recipient, string reason, uint amount, uint date);
+  //event NewMember();
+  //event NewElection();
+  //event NewAmendment();
+  //event NewIssue();
+  //event SalaryAdjustment();
 
   //constructor
   function Uniond(){
-      member[msg.sender] = Member(now, now, true, true, true, true, now, now, 1000);
+      member[msg.sender] = Member(now, now, true, true, true, true, now, now, 1000, 0, 0);
       members.push(msg.sender);
-      tokenPayments.push(TokenPayments(0, 0));
+      tokenPayments.push(TokenPayments(0, 0, 0));
       constitution[0] = 1; //minSignatures
       constitution[1] = 2419200; //electionDuration
       constitution[2] = 50; //electionWinThreshold
@@ -92,24 +107,46 @@ contract Uniond {
   }
 
   modifier onlyMemberAdmin {
-      if (!member[msg.sender].isMemberAdmin && now - member[msg.sender].electedMemberAdminDate < constitution[1]) {
+      if (!member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[1]) {
         throw;
       }
       _
   }
 
   modifier onlyTreasurer {
-      if (!member[msg.sender].isTreasurer && now - member[msg.sender].electedTreasurerDate < constitution[1]) {
+      if (!member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[1]) {
         throw;
       }
       _
   }
 
   modifier onlyMember {
-      if (!member[msg.sender].isMember && now - member[msg.sender].renewalDate < constitution[6]) {
+      if (!member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
         throw;
       }
       _
+  }
+
+  /// @notice Gets the total membership count
+  /// @returns count of the total members (active and inactive)
+  function getMemberCount() constant returns (uint count){
+    return members.length;
+  }
+
+  /// @notice Reviews the active membership of the Uniond
+  /// @param start index to start from;
+  /// @param end index to end on;
+  /// @return success if the review was successful;
+  function reviewActiveMembers(uint start, uint end) onlyTreasurer returns (bool success){
+    if(start == 0){
+      activeMembers = 0;
+    }
+    for(uint i = start; i < end; i++){
+      if(now - member[members[i]].renewalDate < constitution[6]){
+        activeMembers++;
+      }
+    }
+    return true;
   }
 
   /// @notice Creates a new election object
@@ -127,19 +164,11 @@ contract Uniond {
   /// @notice Members can vote on an election
   /// @param election which election they are voting on
   /// @return success if their vote was cast
-  function voteElection(uint election) returns (bool success){
-      if(now < elections[election].deadline && member[msg.sender].exists && member[msg.sender].isMember){
-         bool hasVoted = false;
-         for(uint i=0; i < elections[election].votes.length; i++){
-            if(elections[election].votes[i] == msg.sender){
-              hasVoted = true;
-              break;
-            }
-         }
-         if(!hasVoted){
-            elections[election].votes.push(msg.sender);
-            return true;
-         }
+  function voteElection(uint election) onlyMember returns (bool success){
+      if(now < elections[election].deadline && !elections[election].hasVoted[msg.sender]){
+          elections[election].votes.push(msg.sender);
+          elections[election].hasVoted[msg.sender] = true;
+          return true;
       }
       return false;
   }
@@ -149,7 +178,7 @@ contract Uniond {
   /// @return result if successful or not
   function callElection(uint election) returns (bool result){
       if(now > elections[election].deadline && 
-        ((getActiveMemberCount() / elections[election].votes.length)*100) > constitution[2]){
+        ((activeMembers / elections[election].votes.length)*100) > constitution[2]){
         return true;
       } else {
         return false;
@@ -170,10 +199,10 @@ contract Uniond {
           elections[election].executed = true;
           member[nominee].electedTreasurerDate = now;
         } else if (elections[election].role == 2){
-            //add memberAdmin 
-            member[nominee].isMemberAdmin = true;
-            elections[election].executed = true;
-            member[nominee].electedMemberAdminDate = now;
+          //add memberAdmin 
+          member[nominee].isMemberAdmin = true;
+          elections[election].executed = true;
+          member[nominee].electedMemberAdminDate = now;
         } else if (elections[election].role == 5) {
           //revoke treasurer
           member[nominee].isTreasurer = false;
@@ -196,11 +225,12 @@ contract Uniond {
   /// @return success if the joiningFee is paid
   function applyMember() returns (bool success){
       if(msg.value >= constitution[5] && !member[msg.sender].exists){
-        member[msg.sender] = Member(now, 0, true, false, false, false, 0, 0, 0);
+        member[msg.sender] = Member(now, 0, true, false, false, false, 0, 0, 0, 0, 0);
         return true;
       } else if (msg.value >= constitution[5] && member[msg.sender].exists){
         member[msg.sender].isMember = true;
         member[msg.sender].renewalDate = now;
+        return true;
       }
       return false;
   }
@@ -226,32 +256,18 @@ contract Uniond {
       return true;
   }
 
-  /// @notice treasurers can set the subscriptionPeriod
-  /// @param period the duration to set
-  /// @return success if the subscriptionPeriod is set
-  function setSubscriptionPeriod(uint period) onlyTreasurer returns (bool success){
-      constitution[6] = period;
-      return true;
-  }
-
   /// @notice get the union contract's ether balance
   /// @return balance the balance of the contract
   function unionBalance() constant returns (uint balance) {
       return this.balance;
   }
 
-  /// @notice create new issue, give all members a vote
+  /// @notice create new issue, all members get a vote
   /// @param description what the issue is about
   /// @param deadline when the issue is called
   /// @return success if the issue is set
-  function addIssue(string description, uint deadline) returns (bool success){
+  function addIssue(string description, uint deadline) onlyMember returns (bool success){
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
-      //credit each member with a vote
-      for(uint i=0; i < members.length; i++){
-        if(member[members[i]].isMember){
-          votes[members[i]]++;
-        }
-      }
       return true;
   }
 
@@ -261,8 +277,8 @@ contract Uniond {
   /// @param amount how many votes to cast
   /// @return success if the votes are cast
   function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
-      if(now < issues[issue].deadline && votes[msg.sender] >= amount){
-        votes[msg.sender] -= amount;
+      if(now < issues[issue].deadline && (issues.length + member[msg.sender].delegatedVotes - member[msg.sender].spentVotes) >= amount){
+        member[msg.sender].spentVotes += amount;
         if(approve){
           issues[issue].approve += amount;
         } else {
@@ -278,24 +294,12 @@ contract Uniond {
   /// @param amount how many votes to give them
   /// @return success if the votes are transfered
   function transferVotes(address reciever, uint amount) returns (bool success){
-      if(votes[msg.sender] >= amount){
-        votes[msg.sender] -= amount;
-        votes[reciever] += amount;
+      if((issues.length + member[msg.sender].delegatedVotes - member[msg.sender].spentVotes) >= amount){
+        member[msg.sender].spentVotes += amount;
+        member[reciever].delegatedVotes += amount;
         return true;
       }
       return false;
-  }
-
-  /// @notice get a count of the active members
-  /// @return count of the active members
-  function getActiveMemberCount() constant returns (uint count){
-    count = 0;
-    for(uint i=0; i < members.length; i++){
-      if(member[members[i]].isMember){
-        count ++;
-      }
-    }
-    return count;
   }
 
   /// @notice create new spend object
@@ -312,15 +316,9 @@ contract Uniond {
   /// @param spend to sign
   /// @return success if the signature is appended
   function signSpend(uint spend) onlyTreasurer returns (bool success){
-    bool hasSigned = false;
-    for(uint i=0; i < spends[spend].signatures.length; i++){
-      if(msg.sender == spends[spend].signatures[i]){
-        hasSigned = true;
-        break;
-      }
-    }
-    if(!hasSigned){
+    if(!spends[spend].hasSigned[msg.sender]){
       spends[spend].signatures.push(msg.sender);
+      spends[spend].hasSigned[msg.sender] = true;
       return true;
     } else {
       return false;
@@ -355,12 +353,24 @@ contract Uniond {
     return true;
   }
 
+  /// @notice Members can vote on an amendment
+  /// @param amendment which amendment they are voting on
+  /// @return success if their vote was cast
+  function voteAmendment(uint amendment) onlyMember returns (bool success){
+      if(now < amendments[amendment].deadline && !amendments[amendment].hasVoted[msg.sender]){
+          amendments[amendment].votes.push(msg.sender);
+          amendments[amendment].hasVoted[msg.sender] = true;
+          return true;
+      }
+      return false;
+  }
+
   /// @notice call an amendment 
   /// @param amendment which to call
   /// @return result true if it is past
   function callAmendment(uint amendment) returns (bool result){
       if(now > amendments[amendment].deadline && 
-        ((getActiveMemberCount() / amendments[amendment].votes.length)*100) > constitution[4]){
+        ((activeMembers / amendments[amendment].votes.length)*100) > constitution[4]){
         return true;
       } else {
         return false;
@@ -417,19 +427,25 @@ contract Uniond {
     return false;
   }
 
-  /// @notice pay everyone their salary
+  /// @notice pay everyone their salary, in batches
   /// @return success if the payment is made
-  function paySalary() returns (bool success){
-    if(now - tokenPayments[tokenPayments.length - 1].paymentDate >= constitution[9]) {
+  function paySalary(uint start, uint end) onlyTreasurer returns (bool success){
+    //create a new Token Payment for a new payment cycle
+    if(start == 0 && (now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9]){
+      tokenPayments.push(TokenPayments(0, now, 0));
+    }
+    if(tokenPayments[tokenPayments.length -1].paymentsMade < activeMembers){
       uint amountPaid = 0;
-      for(uint i = 0; i < members.length; i++){
-        if(member[members[i]].isMember && member[members[i]].salary > 0){
+      for(uint i = start; i < end; i++){
+        if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
           tokens[members[i]] += member[members[i]].salary;
           amountPaid += member[members[i]].salary;
+          tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
+          tokenPayments[tokenPayments.length -1].paymentsMade++;
         }
       }
       tokenSupply += amountPaid;
-      tokenPayments.push(TokenPayments(amountPaid, now));
+      tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
       return true;
     }
     return false;
