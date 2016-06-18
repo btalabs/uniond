@@ -14,10 +14,19 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   });
 
-  it("should set tokenSupply to 0 initially", function(done) {
+  it("should be able to get Member count", function(done) {
     var uniond = Uniond.deployed();
-    uniond.totalSupply.call({from: accounts[0]}).then(function(result) {
-      assert.equal(result, 0, 'tokenSupply not set to 0');
+    uniond.getMemberCount.call({from: accounts[0]}).then(function(result) {
+      assert.equal(result, 1, 'member count not set to 1');
+    }).then(done).catch(done);
+  });
+
+  it("should be able to review active members", function(done) {
+    var uniond = Uniond.deployed();
+    uniond.reviewActiveMembers(0, 1, {from: accounts[0]}).then(function(result) {
+      return uniond.activeMembers.call();
+    }).then(function(result) {
+      assert.equal(result.toNumber(), 1, 'active member count not set to 1')
     }).then(done).catch(done);
   });
 
