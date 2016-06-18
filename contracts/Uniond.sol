@@ -1,9 +1,8 @@
 /// @title Uniond -- unions, decentralised
 /// @author hugooconnor, arkhh
 
-// TODO: consider case where all members are 'locked out'
-// consider out of gas error for looping functions -- ~ 500 person limit on size of uniond with current implementation?
-// replace for loops with some smarter thinking
+// TODO: split apply to join from renewing membership fee.
+// create struct with joining application - refund joiningFee if not approved
 
 contract Uniond {
 
@@ -99,7 +98,7 @@ contract Uniond {
       constitution[2] = 50; //electionWinThreshold
       constitution[3] = 31536000; //mandateDuration
       constitution[4] = 66; //amendmentWinThreshold
-      constitution[5] = 0; //joiningFee
+      constitution[5] = 1000; //joiningFee
       constitution[6] = 31536000; //subscriptionPeriod
       constitution[7] = 1; //canSetSalary
       constitution[8] = 1000; //salaryCap

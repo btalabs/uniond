@@ -30,4 +30,15 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   });
 
+  it("should be able to add new member", function(done) {
+    var uniond = Uniond.deployed();
+    uniond.applyMember({from: accounts[1], value: 1000}).then(function(result) {
+      return uniond.addMember(accounts[1], {from: accounts[0]});
+    }).then(function(result) {
+      return uniond.member.call(accounts[1]);
+    }).then(function(result) {
+      assert.equal(result[3], true, 'accounts[1] not a member')
+    }).then(done).catch(done);
+  });
+
 });
