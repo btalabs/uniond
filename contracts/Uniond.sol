@@ -128,7 +128,7 @@ contract Uniond {
   }
 
   /// @notice Gets the total membership count
-  /// @returns count of the total members (active and inactive)
+  /// @return count of the total members (active and inactive)
   function getMemberCount() constant returns (uint count){
     return members.length;
   }

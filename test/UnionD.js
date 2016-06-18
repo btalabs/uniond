@@ -1,42 +1,24 @@
-contract('Uniond', function(accounts)
-{
+contract('UnionD', function(accounts) {
 
-  it("Add Member to Uniond", function(done)
-  {
+  it("should make creator a member", function(done) {
     var uniond = Uniond.deployed();
-
-    var account_one = accounts[0];
-
-    //console.log(uniond);
-    
-    uniond.addMemberTest.call(account_one).then(function(result)
-    {
-      console.log("add member = ", result);
-      assert.equal(result, true, "member wasn't added");
+    uniond.member.call(accounts[0], {from: accounts[0]}).then(function(result) {
+      assert.equal(result[3], true, 'creator not made a member');
     }).then(done).catch(done);
   });
 
-  it("Check Member exists", function(done)
-  {
+  it("should set tokenSupply to 0 initially", function(done) {
     var uniond = Uniond.deployed();
-    
-    uniond.member.call(accounts[0]).then(function(member)
-    {
-      console.log("check member = ", member);
-      assert.equal(member[2], true, "member doens't exist");
+    uniond.totalSupply.call({from: accounts[0]}).then(function(result) {
+      assert.equal(result, 0, 'tokenSupply not set to 0');
     }).then(done).catch(done);
   });
 
-  it("Check supply of tokens", function(done)
-  {
+  it("should set tokenSupply to 0 initially", function(done) {
     var uniond = Uniond.deployed();
-    
-    uniond.tokenSupply.call().then(function(supply)
-    {
-      console.log("tokenSupply  = ", supply.toNumber());
-      assert.equal(supply.toNumber(), 0, "supply not equal 0");
+    uniond.totalSupply.call({from: accounts[0]}).then(function(result) {
+      assert.equal(result, 0, 'tokenSupply not set to 0');
     }).then(done).catch(done);
   });
-
 
 });
