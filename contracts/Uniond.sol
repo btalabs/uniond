@@ -1,8 +1,9 @@
 /// @title Uniond -- unions, decentralised
 /// @author hugooconnor, arkhh
+/// WORK IN PROGRESS - NOT READY FOR PRODUCTION
 
-// TODO: split apply to join from renewing membership fee.
-// create struct with joining application - refund joiningFee if not approved
+// TODO:
+// check arithmetic of callElection and callAmendment
 
 contract Uniond {
 
@@ -82,12 +83,12 @@ contract Uniond {
     uint deadline;
   }
 
-  event Payment(address spender, address recipient, string reason, uint amount, uint date);
-  //event NewMember();
-  //event NewElection();
-  //event NewAmendment();
-  //event NewIssue();
-  //event SalaryAdjustment();
+  event PaymentLog(address spender, address recipient, string reason, uint amount, uint date);
+  //event NewMemberLog();
+  //event NewElectionLog();
+  //event NewAmendmentLog();
+  //event NewIssueLog();
+  //event SalaryAdjustmentLog();
 
   //constructor
   function Uniond(){
@@ -153,7 +154,7 @@ contract Uniond {
   /// @param nominee person up for election or removal from power
   /// @param position what role or removal from role they are up for
   /// @return success if it is successful
-  function addElection(address nominee, uint position) returns (bool success){
+  function addElection(address nominee, uint position) onlyMember returns (bool success){
       uint duration = constitution[1];
       uint deadline = now + duration;
       address[] memory votes;
@@ -325,12 +326,11 @@ contract Uniond {
   /// @return success if the signature is appended
   function signSpend(uint spend) onlyTreasurer returns (bool success){
     if(!spends[spend].hasSigned[msg.sender]){
-      spends[spend].signatures.push(msg.sender);
       spends[spend].hasSigned[msg.sender] = true;
+      spends[spend].signatures.push(msg.sender);
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   /// @notice execute spend object
@@ -339,13 +339,13 @@ contract Uniond {
   /// @return success if the spend is spent
   function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
     if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
-      spends[spend].recipient.send(spends[spend].amount);
-      spends[spend].spent = true;
-      Payment(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now);
-      return true;
-    } else {
-      return false;
+      if(spends[spend].recipient.send(spends[spend].amount)){
+        spends[spend].spent = true;
+        PaymentLog(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now);
+        return true;
+      }
     }
+    return false;
   }
 
   /// @notice create new amendment object
@@ -380,9 +380,8 @@ contract Uniond {
       if(now > amendments[amendment].deadline && 
         ((activeMembers / amendments[amendment].votes.length)*100) > constitution[4]){
         return true;
-      } else {
-        return false;
       }
+      return false;
     }
 
   /// @notice execute amendment object
@@ -393,7 +392,7 @@ contract Uniond {
         constitution[amendments[amendment].clause] = amendments[amendment].value;
         amendments[amendment].executed = true;
         return true;
-        }
+      }
       return false;
     }
 
@@ -419,9 +418,8 @@ contract Uniond {
         tokens[msg.sender] -= _value;
         tokens[_to] += _value;
         return true;  
-      } else {
-        return false;
       }
+      return false;
     }
 
   /// @notice set member salary
