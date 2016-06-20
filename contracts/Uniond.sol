@@ -16,6 +16,7 @@ contract Uniond {
     uint joinDate;
     uint renewalDate;
     bool exists;
+    bool isApproved;
     bool isMember;
     bool isMemberAdmin;
     bool isTreasurer;
@@ -90,7 +91,7 @@ contract Uniond {
 
   //constructor
   function Uniond(){
-      member[msg.sender] = Member(now, now, true, true, true, true, now, now, 1000, 0, 0);
+      member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 1000, 0, 0);
       members.push(msg.sender);
       tokenPayments.push(TokenPayments(0, 0, 0));
       constitution[0] = 1; //minSignatures
@@ -106,21 +107,21 @@ contract Uniond {
   }
 
   modifier onlyMemberAdmin {
-      if (!member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[1]) {
+      if (!member[msg.sender].isApproved && !member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
         throw;
       }
       _
   }
 
   modifier onlyTreasurer {
-      if (!member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[1]) {
+      if (!member[msg.sender].isApproved && !member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
         throw;
       }
       _
   }
 
   modifier onlyMember {
-      if (!member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
+      if (!member[msg.sender].isApproved && !member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
         throw;
       }
       _
@@ -224,24 +225,32 @@ contract Uniond {
   /// @return success if the joiningFee is paid
   function applyMember() returns (bool success){
       if(msg.value >= constitution[5] && !member[msg.sender].exists){
-        member[msg.sender] = Member(now, 0, true, false, false, false, 0, 0, 0, 0, 0);
-        return true;
-      } else if (msg.value >= constitution[5] && member[msg.sender].exists){
-        member[msg.sender].isMember = true;
-        member[msg.sender].renewalDate = now;
+        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, 0, 0);
+        members.push(msg.sender);
         return true;
       }
       return false;
   }
 
-  /// @notice add new member -- must pay joiningFee
+  /// @notice Renew existing membership
+  /// @return success if the membership is renewed
+  function renewMembership() returns (bool success){
+    if(msg.value >= constitution[5] && member[msg.sender].exists && member[msg.sender].isApproved){
+      member[msg.sender].isMember = true;
+      member[msg.sender].renewalDate = now;
+      return true;
+    }
+    //refund msg.value?
+    return false;
+  }
+
+  /// @notice approved newMember
   /// @param newMember address of the new member
   /// @return success if the new member is added
   function addMember(address newMember) onlyMemberAdmin returns (bool success){
       if(member[newMember].exists){
-        members.push(newMember);
+        member[newMember].isApproved = true;
         member[newMember].isMember = true;
-        member[newMember].renewalDate = now;
         return true;
       }
       return false;
