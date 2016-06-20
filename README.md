@@ -6,6 +6,8 @@ Created for the Consensus 2016 Hackathon.
 
 Follow @uniondee for updates.
 
+NOTE: THIS PROJECT IS NOT READY FOR DEPLOYMENT.
+
 #What is UnionD?
 
 We are trying to systemise the organising of groups of people sharing common skills and interests. Guilds, co-operatives and friendly societies share many of these ideas which until now have not been formalised in code.
