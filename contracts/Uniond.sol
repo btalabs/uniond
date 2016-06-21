@@ -322,7 +322,7 @@ contract Uniond {
   /// @param spend to sign
   /// @return success if the signature is appended
   function signSpend(uint spend) onlyTreasurer returns (bool success){
-    if(!spends[spend].hasSigned[msg.sender]){
+    if(!spends[spend].spent && !spends[spend].hasSigned[msg.sender]){
       spends[spend].hasSigned[msg.sender] = true;
       spends[spend].signatures.push(msg.sender);
       return true;
