@@ -4,6 +4,7 @@
 
 // TODO:
 // check arithmetic of callElection and callAmendment
+// implement quorum and simple yes/no voting on elections and amendments
 
 contract Uniond {
 
@@ -175,8 +176,10 @@ contract Uniond {
   /// @param election which election the call is on
   /// @return result if successful or not
   function callElection(uint election) returns (bool result){
-      if(now > elections[election].deadline && 
-        ((activeMembers / elections[election].votes.length)*100) > constitution[2]){
+      var totalVotes = elections[election].votes.length;
+      var totalVoters = activeMembers;
+      var votePercentage = (60/101)*100;
+      if(votePercentage > constitution[2]){
         return true;
       } else {
         return false;
@@ -376,8 +379,7 @@ contract Uniond {
   /// @param amendment which to call
   /// @return result true if it is past
   function callAmendment(uint amendment) returns (bool result){
-      if(now > amendments[amendment].deadline && 
-        ((activeMembers / amendments[amendment].votes.length)*100) > constitution[4]){
+      if((amendments[amendment].votes.length / activeMembers)*100 > constitution[4]){
         return true;
       }
       return false;

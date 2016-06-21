@@ -125,6 +125,63 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done)
   });
 
+  it("should create 101 members", function(done){
+    var uniond = Uniond.deployed();
+
+    for(var i=2; i < 101; i++){
+      uniond.applyMember({from: accounts[i], value: 1000});
+      uniond.addMember(accounts[i], {from: accounts[0]});
+    }
+
+    uniond.member.call(accounts[100]).then(function(result){
+      assert.equal(result[3], true, "100th member not added")
+    }).then(done).catch(done)
+
+  });
+
+  it("should be able to create an election", function(done){
+    var uniond = Uniond.deployed();
+
+    uniond.addElection(accounts[100], 1).then(function(result){
+      return uniond.elections.call(0);
+    }).then(function(result){
+      assert.equal(result[1], accounts[100], "member not up for election");
+    }).then(done).catch(done);
+
+  });
+
+  it("should be able to call an election loss", function(done){
+    var uniond = Uniond.deployed();
+
+    for(var i = 0; i < 40; i++){
+      uniond.voteElection(0);
+    }
+
+    uniond.reviewActiveMembers(0, 100);
+
+    uniond.callElection.call(0).then(function(result){
+      assert.equal(result, false, "threshold not met -- yet election passed")
+    }).then(done).catch(done);
+
+  });
+
+  it("should be able to call an election win", function(done){
+    var uniond = Uniond.deployed();
+
+    uniond.addElection(accounts[98], 1);
+
+    for(var i = 0; i < 60; i++){
+      uniond.voteElection(1);
+    }
+
+    uniond.reviewActiveMembers(0, 100);
+
+    uniond.callElection.call(1).then(function(result){
+      assert.equal(result, true, "threshold met -- yet election not passed")
+    }).then(done).catch(done);
+
+  });
+
 
 
 });
