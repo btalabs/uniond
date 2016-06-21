@@ -189,7 +189,7 @@ contract Uniond {
     /// @param election which election is it
     /// @return success if the mandate is executed
     function executeElectionMandate(uint election) returns (bool success){
-      if(!elections[election].executed && callElection(election)){
+      if(member[elections[election].nominee].exists && !elections[election].executed && callElection(election)){
         address nominee = elections[election].nominee;
         if(elections[election].role == 1){
           //add treasurer
