@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "web3": "^0.17.0-alpha"
+  },
+  "devDependencies": {},
+  "name": "union-d",
+  "description": "Unions Decentralised"
+}

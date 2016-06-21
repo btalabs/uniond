@@ -108,24 +108,21 @@ contract Uniond {
   }
 
   modifier onlyMemberAdmin {
-      if (!member[msg.sender].isApproved && !member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
-        throw;
+      if (member[msg.sender].isApproved && member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
+        _
       }
-      _
   }
 
   modifier onlyTreasurer {
-      if (!member[msg.sender].isApproved && !member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
-        throw;
+      if (member[msg.sender].isApproved && member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
+        _
       }
-      _
   }
 
   modifier onlyMember {
-      if (!member[msg.sender].isApproved && !member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
-        throw;
+      if (member[msg.sender].isApproved && member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
+        _
       }
-      _
   }
 
   /// @notice Gets the total membership count
@@ -338,8 +335,10 @@ contract Uniond {
   /// @param reason for the spend
   /// @return success if the spend is spent
   function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
-    if(this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
-      if(spends[spend].recipient.send(spends[spend].amount)){
+    if(!spends[spend].spent && this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
+      if(!spends[spend].recipient.send(spends[spend].amount)){
+        throw;
+      } else {
         spends[spend].spent = true;
         PaymentLog(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now);
         return true;
@@ -456,4 +455,5 @@ contract Uniond {
     }
     return false;
   }
+
 }
