@@ -112,6 +112,19 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done)
   });
 
+  it("should not execute spends that aren't signed", function(done){
+    var uniond = Uniond.deployed();
+    uniond.newSpend(1000, accounts[1], {from: accounts[0]}).then(function(result){
+      return uniond.executeSpend(2, 'testing', {from: accounts[1]});
+    }).then(function(result){
+      // console.log(result);
+      return uniond.spends.call(2);
+    }).then(function(result){
+      // console.log(result);
+      assert.equal(result[2], false, "spend executed by non treasurer!");
+    }).then(done).catch(done)
+  });
+
 
 
 });
