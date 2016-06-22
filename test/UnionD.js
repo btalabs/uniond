@@ -171,17 +171,25 @@ contract('UnionD', function(accounts) {
     uniond.addElection(accounts[98], 1);
 
     for(var i = 0; i < 60; i++){
-      uniond.voteElection(1);
+      uniond.voteElection(1, {from: accounts[i]});
     }
 
     uniond.reviewActiveMembers(0, 100);
 
     uniond.callElection.call(1).then(function(result){
-      assert.equal(result, true, "threshold met -- yet election not passed")
+      console.log(result);
+      assert.equal(result, true, "threshold met -- yet election not passed");
     }).then(done).catch(done);
 
   });
 
+
+  // it("should be able to do maths", function(done){
+  //   var uniond = Uniond.deployed()
+  //   uniond.test.call().then((result)=>{
+  //     console.log(result.toNumber());
+  //   }).then(done).catch(done);
+  // })
 
 
 });

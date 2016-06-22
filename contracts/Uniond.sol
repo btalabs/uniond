@@ -4,7 +4,8 @@
 
 // TODO:
 // check arithmetic of callElection and callAmendment
-// implement quorum and simple yes/no voting on elections and amendments
+// implement quorum and simple yes/no voting on elections and amendments?
+// reviewMembers attack - could be set to 0 and mess up quorum - may need temp var
 
 contract Uniond {
 
@@ -71,7 +72,7 @@ contract Uniond {
     uint role;
     uint deadline;
     bool executed;
-    address[] votes;
+    uint votes;
     mapping(address => bool) hasVoted;
   }
 
@@ -155,8 +156,8 @@ contract Uniond {
   function addElection(address nominee, uint position) onlyMember returns (bool success){
       uint duration = constitution[1];
       uint deadline = now + duration;
-      address[] memory votes;
-      elections.push(Election(msg.sender, nominee, position, deadline, false, votes));
+      //address[] memory votes;
+      elections.push(Election(msg.sender, nominee, position, deadline, false, 0));
       return true;
   }
 
@@ -165,8 +166,8 @@ contract Uniond {
   /// @return success if their vote was cast
   function voteElection(uint election) onlyMember returns (bool success){
       if(now < elections[election].deadline && !elections[election].hasVoted[msg.sender]){
-          elections[election].votes.push(msg.sender);
           elections[election].hasVoted[msg.sender] = true;
+          elections[election].votes++;
           return true;
       }
       return false;
@@ -176,10 +177,7 @@ contract Uniond {
   /// @param election which election the call is on
   /// @return result if successful or not
   function callElection(uint election) returns (bool result){
-      var totalVotes = elections[election].votes.length;
-      var totalVoters = activeMembers;
-      var votePercentage = (60/101)*100;
-      if(votePercentage > constitution[2]){
+      if((elections[election].votes*100)/activeMembers > constitution[2]){
         return true;
       } else {
         return false;
