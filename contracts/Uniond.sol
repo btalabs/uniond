@@ -2,10 +2,6 @@
 /// @author hugooconnor, arkhh
 /// WORK IN PROGRESS - NOT READY FOR PRODUCTION
 
-// TODO:
-// implement quorum and simple yes/no voting on elections and amendments?
-// reviewMembers attack - could be set to 0 and mess up quorum - may need temp var
-
 contract Uniond {
 
   uint[10] public constitution;
@@ -31,8 +27,6 @@ contract Uniond {
   
   uint tokenSupply;
   mapping(address => uint) public tokens;
-
-  mapping(address => uint) public votes;
   
   Issue[] public issues;
   Spend[] public spends;
@@ -52,6 +46,7 @@ contract Uniond {
     uint amountPaid;
     uint paymentDate;
     uint paymentsMade;
+    uint lastEndIndex;
     mapping(address => bool) beenPaid;
   }
 
@@ -395,7 +390,10 @@ contract Uniond {
   /// @param amendment which to call
   /// @return result true if it is past
   function callAmendment(uint amendment) returns (bool result){
-      if((amendments[amendment].votes.length / activeMembers)*100 > constitution[4]){
+    //check that a member review has been conducted in the past day
+      if(now - memberReviews[memberReviews.length -1].reviewDate < 1 days
+       && memberReviews[memberReviews.length -1].tempActiveMembers == activeMembers
+       && (amendments[amendment].votes.length / activeMembers)*100 > constitution[4]){
         return true;
       }
       return false;
@@ -457,21 +455,22 @@ contract Uniond {
     if(start == 0 && (now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9]){
       tokenPayments.push(TokenPayments(0, now, 0));
     }
-    if(tokenPayments[tokenPayments.length -1].paymentsMade < activeMembers){
-      uint amountPaid = 0;
-      for(uint i = start; i < end; i++){
-        if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
-          tokens[members[i]] += member[members[i]].salary;
-          amountPaid += member[members[i]].salary;
-          tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
-          tokenPayments[tokenPayments.length -1].paymentsMade++;
-        }
-      }
-      tokenSupply += amountPaid;
-      tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
-      return true;
+    if(start > 0 && tokenPayments[tokenPayments.length - 1].lastEndIndex != start){
+      return false;
     }
-    return false;
+    uint amountPaid = 0;
+    for(uint i = start; i < end; i++){
+      if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
+        tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
+        tokens[members[i]] += member[members[i]].salary;
+        amountPaid += member[members[i]].salary;
+        tokenPayments[tokenPayments.length -1].paymentsMade++;
+      }
+    }
+    tokenSupply += amountPaid;
+    tokenPayments[tokenPayments.length - 1].lastEndIndex = end;
+    tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
+    return true;
   }
 
 }

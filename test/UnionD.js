@@ -233,6 +233,19 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should be able to pay salaries", function(done){
+    var uniond = Uniond.deployed();
+
+    for(var i=100; i < 120; i++){
+      uniond.setSalary(500, {from: accounts[i]});
+    }
+
+    uniond.paySalary(0, 119, {from: accounts[0]}).then(function(result){
+      console.log(result);
+    }).then(done).catch(done);
+    
+  })
+
 
   // it("should be able to do maths", function(done){
   //   var uniond = Uniond.deployed()
