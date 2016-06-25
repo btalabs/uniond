@@ -12,9 +12,6 @@ contract Uniond {
 
   address[] public members;
   uint public activeMembers;
-  bool tempReviewSwitch;
-  uint tempReviewMembers;
-  mapping(uint => bool) hasReviewedMember;
   mapping(address => Member) public member;
 
   struct Member {
@@ -42,6 +39,14 @@ contract Uniond {
   Election[] public elections;
   Amendment[] public amendments;
   TokenPayments[] public tokenPayments;
+  MemberReview[] memberReviews;
+
+  struct MemberReview {
+    uint reviewDate;
+    uint tempActiveMembers;
+    uint lastEndIndex;
+    mapping(uint => bool) reviewed;
+  }
 
   struct TokenPayments {
     uint amountPaid;
@@ -141,21 +146,21 @@ contract Uniond {
   /// @return success if the review was successful;
   function reviewActiveMembers(uint start, uint end) onlyTreasurer returns (bool success){
     if(start == 0){
-      tempReviewMembers = 0;
-      tempReviewSwitch = !hasReviewedMember[members.length - 1];
+      memberReviews.push(MemberReview(now, 0, 0));
     }
-    if(start > 0 && hasReviewedMember[start - 1] != tempReviewSwitch){
+    if(start > 0 && memberReviews[memberReviews.length -1].lastEndIndex != start){
       return false;
     }
     for(uint i = start; i < end; i++){
-        if((hasReviewedMember[i] != tempReviewSwitch) && now - member[members[i]].renewalDate < constitution[6]){
-          tempReviewMembers++;
-          hasReviewedMember[i] = tempReviewSwitch;
+        if(!(memberReviews[memberReviews.length -1].reviewed[i]) && now - member[members[i]].renewalDate < constitution[6]){
+          memberReviews[memberReviews.length -1].tempActiveMembers++;
+          memberReviews[memberReviews.length -1].reviewed[i] = true;
         }
     }
     if(end == members.length){
-      activeMembers = tempReviewMembers;
+      activeMembers = memberReviews[memberReviews.length -1].tempActiveMembers;
     }
+    memberReviews[memberReviews.length -1].lastEndIndex = end;
     return true;
   }
 
@@ -187,7 +192,10 @@ contract Uniond {
   /// @param election which election the call is on
   /// @return result if successful or not
   function callElection(uint election) returns (bool result){
-      if((elections[election].votes*100)/activeMembers > constitution[2]){
+    //check recent memberReview has been conducted and completed
+      if(now - memberReviews[memberReviews.length -1].reviewDate < 1 days
+       && memberReviews[memberReviews.length -1].tempActiveMembers == activeMembers
+       && (elections[election].votes*100)/activeMembers > constitution[2]){
         return true;
       } else {
         return false;

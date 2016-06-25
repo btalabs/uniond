@@ -205,21 +205,33 @@ contract('UnionD', function(accounts) {
       return uniond.activeMembers.call();
     }).then(function(members){
       console.log("activemembers", members);
+      assert.equal(members, 101, "wrong count of active members")
     }).then(done).catch(done);
   })
 
-  // it("should be able to review activeMembers in batches", function(done){
-  //   var uniond = Uniond.deployed();
+  it("should be able to review activeMembers in batches", function(done){
+    var uniond = Uniond.deployed();
 
-  //   uniond.getMemberCount.call().then(function(result){
-  //     return uniond.reviewActiveMembers(0, result.toNumber(), {from: accounts[0]})
-  //   }).then(function(result){
-  //     //console.log(result);
-  //     return uniond.activeMembers.call();
-  //   }).then(function(members){
-  //     //console.log("activemembers", members);
-  //   }).then(done).catch(done);
-  // })
+    for(var i=102; i < 120; i++){
+      uniond.applyMember({from: accounts[i], value: 1000});
+      uniond.addMember(accounts[i], {from: accounts[0]});
+    }
+
+    uniond.reviewActiveMembers(0, 50, {from: accounts[0]}).then(function(result){
+      console.log("first batch", result);
+      return uniond.getMemberCount.call();      
+    }).then(function(result){
+      console.log("new member count", result);
+      var end = result.toNumber()
+      return uniond.reviewActiveMembers(50, end, {from: accounts[0]});
+    }).then(function(result){
+      console.log("second batch", result);
+      return uniond.activeMembers.call();
+    }).then(function(members){
+      console.log("activemembers", members);
+      assert.equal(members.toNumber(), 119, "wrong count of active members")
+    }).then(done).catch(done);
+  })
 
 
   // it("should be able to do maths", function(done){
