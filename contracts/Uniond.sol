@@ -45,7 +45,6 @@ contract Uniond {
   struct TokenPayments {
     uint amountPaid;
     uint paymentDate;
-    uint paymentsMade;
     uint lastEndIndex;
     mapping(address => bool) beenPaid;
   }
@@ -88,6 +87,7 @@ contract Uniond {
   }
 
   event PaymentLog(address spender, address recipient, string reason, uint amount, uint date);
+  event TokenPaymentLog(address treasurer, address recipient, uint date, uint amount);
   //event NewMemberLog();
   //event NewElectionLog();
   //event NewAmendmentLog();
@@ -96,7 +96,7 @@ contract Uniond {
 
   //constructor
   function Uniond(){
-      member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 1000, 0, 0);
+      member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 0, 0, 0);
       members.push(msg.sender);
       tokenPayments.push(TokenPayments(0, 0, 0));
       constitution[0] = 1; //minSignatures
@@ -451,26 +451,30 @@ contract Uniond {
   /// @notice pay everyone their salary, in batches
   /// @return success if the payment is made
   function paySalary(uint start, uint end) onlyTreasurer returns (bool success){
-    //create a new Token Payment for a new payment cycle
-    if(start == 0 && (now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9]){
-      tokenPayments.push(TokenPayments(0, now, 0));
-    }
-    if(start > 0 && tokenPayments[tokenPayments.length - 1].lastEndIndex != start){
+    if((now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9]){
+      //create a new Token Payment for a new payment cycle
+      if(start == 0){
+        tokenPayments.push(TokenPayments(0, now, end));
+      }
+      if(start > 0 && tokenPayments[tokenPayments.length - 1].lastEndIndex != start){
+        return false;
+      }
+      uint amountPaid = 0;
+      for(uint i = start; i < end; i++){
+        if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
+          tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
+          tokens[members[i]] += member[members[i]].salary;
+          amountPaid += member[members[i]].salary;
+          TokenPaymentLog(msg.sender, members[i], now, member[members[i]].salary);
+        }
+      }
+      tokenSupply += amountPaid;
+      tokenPayments[tokenPayments.length - 1].lastEndIndex = end;
+      tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
+      return true;
+    } else {
       return false;
     }
-    uint amountPaid = 0;
-    for(uint i = start; i < end; i++){
-      if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
-        tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
-        tokens[members[i]] += member[members[i]].salary;
-        amountPaid += member[members[i]].salary;
-        tokenPayments[tokenPayments.length -1].paymentsMade++;
-      }
-    }
-    tokenSupply += amountPaid;
-    tokenPayments[tokenPayments.length - 1].lastEndIndex = end;
-    tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
-    return true;
   }
 
 }

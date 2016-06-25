@@ -161,12 +161,12 @@ contract('UnionD', function(accounts) {
     }
 
     uniond.getMemberCount.call().then(function(result){
-      console.log("membercount", result);
+      // console.log("membercount", result);
       var end = result.toNumber();
-      console.log('end', end);
+      // console.log('end', end);
       return uniond.reviewActiveMembers(0, end, {from: accounts[0]});
     }).then(function(result){
-      console.log("activemembers", result);
+      // console.log("activemembers", result);
       return uniond.callElection.call(0);
     }).then(function(result){
       assert.equal(result, false, "threshold not met -- yet election passed")
@@ -194,17 +194,17 @@ contract('UnionD', function(accounts) {
     var uniond = Uniond.deployed();
 
     uniond.activeMembers.call().then(function(result){
-      console.log('init activemembers', result);
+      // console.log('init activemembers', result);
       return uniond.getMemberCount.call();
     }).then(function(result){
       var end = result.toNumber()
-      console.log(end);
+      // console.log(end);
       return uniond.reviewActiveMembers(0, end, {from: accounts[0]})
     }).then(function(result){
       //console.log(result);
       return uniond.activeMembers.call();
     }).then(function(members){
-      console.log("activemembers", members);
+      // console.log("activemembers", members);
       assert.equal(members, 101, "wrong count of active members")
     }).then(done).catch(done);
   })
@@ -212,36 +212,54 @@ contract('UnionD', function(accounts) {
   it("should be able to review activeMembers in batches", function(done){
     var uniond = Uniond.deployed();
 
-    for(var i=102; i < 120; i++){
+    for(var i=101; i < 120; i++){
       uniond.applyMember({from: accounts[i], value: 1000});
       uniond.addMember(accounts[i], {from: accounts[0]});
     }
 
     uniond.reviewActiveMembers(0, 50, {from: accounts[0]}).then(function(result){
-      console.log("first batch", result);
+      // console.log("first batch", result);
       return uniond.getMemberCount.call();      
     }).then(function(result){
-      console.log("new member count", result);
+      // console.log("new member count", result);
       var end = result.toNumber()
       return uniond.reviewActiveMembers(50, end, {from: accounts[0]});
     }).then(function(result){
-      console.log("second batch", result);
+      // console.log("second batch", result);
       return uniond.activeMembers.call();
     }).then(function(members){
-      console.log("activemembers", members);
-      assert.equal(members.toNumber(), 119, "wrong count of active members")
+      // console.log("activemembers", members);
+      assert.equal(members.toNumber(), 120, "wrong count of active members")
     }).then(done).catch(done);
   })
 
   it("should be able to pay salaries", function(done){
     var uniond = Uniond.deployed();
 
-    for(var i=100; i < 120; i++){
-      uniond.setSalary(500, {from: accounts[i]});
-    }
-
-    uniond.paySalary(0, 119, {from: accounts[0]}).then(function(result){
-      console.log(result);
+    uniond.setSalary(500, {from: accounts[99]}).then(function(result){
+      return uniond.setSalary(500, {from: accounts[100]});
+    }).then(function(result){
+      return uniond.setSalary(500, {from: accounts[101]});
+    }).then(function(result){
+      return uniond.paySalary(0, 119, {from: accounts[0]});
+    }).then(function(result){
+      // console.log("pay salary", result);
+      return uniond.totalSupply.call();
+    }).then(function(result){
+      assert.equal(result.toNumber(), 1500, "wrong amount paid");
+      // console.log('total supply', result);
+      return uniond.tokens.call(accounts[99]);
+    }).then(function(result){
+      // console.log('token balance accounts[99]', result);
+      return uniond.tokens.call(accounts[100]);
+    }).then(function(result){
+      // console.log('token balance accounts[100]', result);
+      return uniond.tokens.call(accounts[101]);
+    }).then(function(result){
+      // console.log('token balance accounts[101]', result);
+      return uniond.member.call(accounts[101]);
+    }).then(function(result){
+      // console.log("member 101", result);
     }).then(done).catch(done);
     
   })
