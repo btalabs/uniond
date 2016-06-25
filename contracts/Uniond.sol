@@ -3,7 +3,6 @@
 /// WORK IN PROGRESS - NOT READY FOR PRODUCTION
 
 // TODO:
-// check arithmetic of callElection and callAmendment
 // implement quorum and simple yes/no voting on elections and amendments?
 // reviewMembers attack - could be set to 0 and mess up quorum - may need temp var
 
@@ -13,6 +12,9 @@ contract Uniond {
 
   address[] public members;
   uint public activeMembers;
+  bool tempReviewSwitch;
+  uint tempReviewMembers;
+  mapping(uint => bool) hasReviewedMember;
   mapping(address => Member) public member;
 
   struct Member {
@@ -139,12 +141,20 @@ contract Uniond {
   /// @return success if the review was successful;
   function reviewActiveMembers(uint start, uint end) onlyTreasurer returns (bool success){
     if(start == 0){
-      activeMembers = 0;
+      tempReviewMembers = 0;
+      tempReviewSwitch = !hasReviewedMember[members.length - 1];
+    }
+    if(start > 0 && hasReviewedMember[start - 1] != tempReviewSwitch){
+      return false;
     }
     for(uint i = start; i < end; i++){
-      if(now - member[members[i]].renewalDate < constitution[6]){
-        activeMembers++;
-      }
+        if((hasReviewedMember[i] != tempReviewSwitch) && now - member[members[i]].renewalDate < constitution[6]){
+          tempReviewMembers++;
+          hasReviewedMember[i] = tempReviewSwitch;
+        }
+    }
+    if(end == members.length){
+      activeMembers = tempReviewMembers;
     }
     return true;
   }
@@ -224,7 +234,7 @@ contract Uniond {
   /// @return success if the joiningFee is paid
   function applyMember() returns (bool success){
       if(msg.value >= constitution[5] && !member[msg.sender].exists){
-        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, 0, 0);
+        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, issues.length, 0); //dont include old issues in vote count
         members.push(msg.sender);
         return true;
       }
@@ -337,10 +347,10 @@ contract Uniond {
   /// @return success if the spend is spent
   function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
     if(!spends[spend].spent && this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
+      spends[spend].spent = true;
       if(!spends[spend].recipient.send(spends[spend].amount)){
         throw;
       } else {
-        spends[spend].spent = true;
         PaymentLog(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now);
         return true;
       }

@@ -23,7 +23,10 @@ contract('UnionD', function(accounts) {
 
   it("should be able to review active members", function(done) {
     var uniond = Uniond.deployed();
-    uniond.reviewActiveMembers(0, 1, {from: accounts[0]}).then(function(result) {
+    uniond.getMemberCount.call().then(function(result){
+      //console.log("getmembercount", result);
+      return uniond.reviewActiveMembers(0, result.toNumber(), {from: accounts[0]});
+    }).then(function(result) {
       return uniond.activeMembers.call();
     }).then(function(result) {
       assert.equal(result.toNumber(), 1, 'active member count not set to 1')
@@ -157,9 +160,15 @@ contract('UnionD', function(accounts) {
       uniond.voteElection(0);
     }
 
-    uniond.reviewActiveMembers(0, 100);
-
-    uniond.callElection.call(0).then(function(result){
+    uniond.getMemberCount.call().then(function(result){
+      console.log("membercount", result);
+      var end = result.toNumber();
+      console.log('end', end);
+      return uniond.reviewActiveMembers(0, end, {from: accounts[0]});
+    }).then(function(result){
+      console.log("activemembers", result);
+      return uniond.callElection.call(0);
+    }).then(function(result){
       assert.equal(result, false, "threshold not met -- yet election passed")
     }).then(done).catch(done);
 
@@ -174,14 +183,43 @@ contract('UnionD', function(accounts) {
       uniond.voteElection(1, {from: accounts[i]});
     }
 
-    uniond.reviewActiveMembers(0, 100);
-
     uniond.callElection.call(1).then(function(result){
-      console.log(result);
+      //console.log(result);
       assert.equal(result, true, "threshold met -- yet election not passed");
     }).then(done).catch(done);
 
   });
+
+  it("should be able to review activeMembers", function(done){
+    var uniond = Uniond.deployed();
+
+    uniond.activeMembers.call().then(function(result){
+      console.log('init activemembers', result);
+      return uniond.getMemberCount.call();
+    }).then(function(result){
+      var end = result.toNumber()
+      console.log(end);
+      return uniond.reviewActiveMembers(0, end, {from: accounts[0]})
+    }).then(function(result){
+      //console.log(result);
+      return uniond.activeMembers.call();
+    }).then(function(members){
+      console.log("activemembers", members);
+    }).then(done).catch(done);
+  })
+
+  // it("should be able to review activeMembers in batches", function(done){
+  //   var uniond = Uniond.deployed();
+
+  //   uniond.getMemberCount.call().then(function(result){
+  //     return uniond.reviewActiveMembers(0, result.toNumber(), {from: accounts[0]})
+  //   }).then(function(result){
+  //     //console.log(result);
+  //     return uniond.activeMembers.call();
+  //   }).then(function(members){
+  //     //console.log("activemembers", members);
+  //   }).then(done).catch(done);
+  // })
 
 
   // it("should be able to do maths", function(done){
