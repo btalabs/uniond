@@ -452,19 +452,25 @@ contract Uniond {
   /// @notice pay everyone their salary, in batches
   /// @return success if the payment is made
   function paySalary(uint start, uint end) onlyTreasurer returns (bool success){
-    //create a new Token Payment for a new payment cycle if the previous token payment is all paid out.
-    if((now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9] && start == 0 && tokenPayments[tokenPayments.length - 1].allPaid){
+    //create a new Token Payment for a new payment cycle if the previous token
+    // payment is all paid out and it is after the subscriptionPeriod
+    if((now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9] 
+      && start == 0 
+      && tokenPayments[tokenPayments.length - 1].allPaid){
       tokenPayments.push(TokenPayments(0, now, end, false));
     }
     if(end > members.length){
       end = members.length;
     }
-    if(start > 0 && (tokenPayments[tokenPayments.length - 1].lastEndIndex != start)){
+    if(start > 0 
+      && (tokenPayments[tokenPayments.length - 1].lastEndIndex != start)){
       return false;
     }
     uint amountPaid = 0;
     for(uint i = start; i < end; i++){
-      if(member[members[i]].isMember && member[members[i]].salary > 0 && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
+      if(member[members[i]].isMember 
+        && member[members[i]].salary > 0 
+        && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
         tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
         tokens[members[i]] += member[members[i]].salary;
         amountPaid += member[members[i]].salary;
