@@ -233,7 +233,38 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
-  it("should be able to pay salaries", function(done){
+  // it("should be able to pay salaries", function(done){
+  //   var uniond = Uniond.deployed();
+
+  //   uniond.setSalary(500, {from: accounts[99]}).then(function(result){
+  //     return uniond.setSalary(500, {from: accounts[100]});
+  //   }).then(function(result){
+  //     return uniond.setSalary(500, {from: accounts[101]});
+  //   }).then(function(result){
+  //     return uniond.paySalary(0, 119, {from: accounts[0]});
+  //   }).then(function(result){
+  //     // console.log("pay salary", result);
+  //     return uniond.totalSupply.call();
+  //   }).then(function(result){
+  //     assert.equal(result.toNumber(), 1500, "wrong amount paid");
+  //     // console.log('total supply', result);
+  //     return uniond.tokens.call(accounts[99]);
+  //   }).then(function(result){
+  //     // console.log('token balance accounts[99]', result);
+  //     return uniond.tokens.call(accounts[100]);
+  //   }).then(function(result){
+  //     // console.log('token balance accounts[100]', result);
+  //     return uniond.tokens.call(accounts[101]);
+  //   }).then(function(result){
+  //     // console.log('token balance accounts[101]', result);
+  //     return uniond.member.call(accounts[101]);
+  //   }).then(function(result){
+  //     // console.log("member 101", result);
+  //   }).then(done).catch(done);
+    
+  // })
+
+  it("should be able to pay salaries in batches", function(done){
     var uniond = Uniond.deployed();
 
     uniond.setSalary(500, {from: accounts[99]}).then(function(result){
@@ -241,8 +272,18 @@ contract('UnionD', function(accounts) {
     }).then(function(result){
       return uniond.setSalary(500, {from: accounts[101]});
     }).then(function(result){
-      return uniond.paySalary(0, 119, {from: accounts[0]});
+      return uniond.paySalary(0, 50, {from: accounts[0]});
     }).then(function(result){
+      // console.log("first batch result", result);
+      // return uniond.tokenPayments.call(1);
+      return uniond.paySalary(1, 30, {from: accounts[0]});
+    }).then(function(result){
+      // console.log("token payments", result);
+      return uniond.paySalary(50, 130, {from: accounts[0]});
+    }).then(function(result){
+      return uniond.tokenPayments.call(1);
+    }).then(function(result){
+      // console.log("second batch result", result);
       // console.log("pay salary", result);
       return uniond.totalSupply.call();
     }).then(function(result){
@@ -263,14 +304,6 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
     
   })
-
-
-  // it("should be able to do maths", function(done){
-  //   var uniond = Uniond.deployed()
-  //   uniond.test.call().then((result)=>{
-  //     console.log(result.toNumber());
-  //   }).then(done).catch(done);
-  // })
 
 
 });
