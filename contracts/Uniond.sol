@@ -1,6 +1,4 @@
-/// @title Uniond -- unions, decentralised
-/// @author hugooconnor, arkhh
-/// WORK IN PROGRESS - NOT READY FOR PRODUCTION
+/// WARNING: not ready for deployment
 
 contract Uniond {
 
@@ -32,7 +30,6 @@ contract Uniond {
   Spend[] public spends;
   Election[] public elections;
   Amendment[] public amendments;
-  TokenPayments[] public tokenPayments;
   MemberReview[] memberReviews;
 
   struct MemberReview {
@@ -41,15 +38,7 @@ contract Uniond {
     uint lastEndIndex;
     mapping(uint => bool) reviewed;
   }
-
-  struct TokenPayments {
-    uint amountPaid;
-    uint paymentDate;
-    uint lastEndIndex;
-    bool allPaid;
-    mapping(address => bool) beenPaid;
-  }
-
+  
   struct Amendment {
     string reason;
     uint clause;
@@ -58,14 +47,6 @@ contract Uniond {
     bool executed;
     address[] votes;
     mapping(address => bool) hasVoted;
-  }
-
-  struct Spend{
-    address recipient;
-    uint amount;
-    address[] signatures;
-    bool spent;
-    mapping(address => bool) hasSigned;
   }
 
   struct Election {
@@ -88,7 +69,6 @@ contract Uniond {
   }
 
   event PaymentLog(address spender, address recipient, string reason, uint amount, uint date);
-  event TokenPaymentLog(address treasurer, address recipient, uint date, uint amount);
   //event NewMemberLog();
   //event NewElectionLog();
   //event NewAmendmentLog();
@@ -99,7 +79,6 @@ contract Uniond {
   function Uniond(){
       member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 0, 0, 0);
       members.push(msg.sender);
-      tokenPayments.push(TokenPayments(0, 0, 0, true));
       constitution[0] = 1; //minSignaturesForSpend
       constitution[1] = 2419200; //electionDuration
       constitution[2] = 50; //electionWinThreshold
@@ -110,13 +89,14 @@ contract Uniond {
       constitution[7] = 1; //canSetSalary
       constitution[8] = 1000; //salaryCap
       constitution[9] = 86400; //salaryPeriod
+      tokens[msg.sender] = 1000000; //initialTokens
   }
 
   modifier onlyMemberAdmin {
       if (member[msg.sender].isApproved 
         && member[msg.sender].isMemberAdmin 
         && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
-        _
+        _ ;
       }
   }
 
@@ -124,7 +104,7 @@ contract Uniond {
       if (member[msg.sender].isApproved 
         && member[msg.sender].isTreasurer 
         && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
-        _
+        _ ;
       }
   }
 
@@ -132,7 +112,18 @@ contract Uniond {
       if (member[msg.sender].isApproved 
         && member[msg.sender].isMember 
         && (now - member[msg.sender].renewalDate) < constitution[6]) {
-        _
+        _ ;
+      }
+  }
+
+  /// @notice Allow treasurer to spend UnionD funds
+  /// @return payment success
+  function spendFunds(address _to, uint _amount, string _reason) onlyTreasurer returns (bool success){
+    if(!_to.send(_amount)){
+        throw;
+      } else {
+        PaymentLog(msg.sender, _to, _reason, _amount, now);
+        return true;
       }
   }
 
@@ -335,48 +326,6 @@ contract Uniond {
       return false;
   }
 
-  /// @notice create new spend object
-  /// @param amount how much to spend
-  /// @param recipient who is to recieve funds
-  /// @return success if the object is created
-  function newSpend(uint amount, address recipient) onlyTreasurer returns (bool success){
-    address[] memory signatures;
-    spends.push(Spend(recipient, amount, signatures, false));
-    return true;
-  }
-
-  /// @notice sign spend object
-  /// @param spend to sign
-  /// @return success if the signature is appended
-  function signSpend(uint spend) onlyTreasurer returns (bool success){
-    if(!spends[spend].spent 
-      && !spends[spend].hasSigned[msg.sender]){
-      spends[spend].hasSigned[msg.sender] = true;
-      spends[spend].signatures.push(msg.sender);
-      return true;
-    }
-    return false;
-  }
-
-  /// @notice execute spend object
-  /// @param spend which spend object
-  /// @param reason for the spend
-  /// @return success if the spend is spent
-  function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
-    if(!spends[spend].spent 
-      && this.balance >= spends[spend].amount 
-      && spends[spend].signatures.length >= constitution[0]){
-      spends[spend].spent = true;
-      if(!spends[spend].recipient.send(spends[spend].amount)){
-        throw;
-      } else {
-        PaymentLog(msg.sender, spends[spend].recipient, reason, spends[spend].amount, now);
-        return true;
-      }
-    }
-    return false;
-  }
-
   /// @notice create new amendment object
   /// @param reason for the amendment
   /// @param clause which constitution setting to amendment
@@ -453,56 +402,5 @@ contract Uniond {
       }
       return false;
     }
-
-  /// @notice set member salary
-  /// @param amount to set
-  /// @return success if the amount is set
-  function setSalary(uint amount) returns (bool success){
-    if(constitution[7] > 0 
-      && amount <= constitution[8] 
-      && member[msg.sender].exists){
-      member[msg.sender].salary = amount;
-      return true;
-    }
-    return false;
-  }
-
-  /// @notice pay everyone their salary, in batches
-  /// @return success if the payment is made
-  function paySalary(uint start, uint end) onlyTreasurer returns (bool success){
-    //create a new Token Payment for a new payment cycle if the previous token
-    // payment is all paid out and it is after the subscriptionPeriod
-    if((now - tokenPayments[tokenPayments.length - 1].paymentDate) >= constitution[9] 
-      && start == 0 
-      && tokenPayments[tokenPayments.length - 1].allPaid){
-      tokenPayments.push(TokenPayments(0, now, end, false));
-    }
-    if(end > members.length){
-      end = members.length;
-    }
-    if(start > 0 
-      && (tokenPayments[tokenPayments.length - 1].lastEndIndex != start)){
-      return false;
-    }
-    uint amountPaid = 0;
-    for(uint i = start; i < end; i++){
-      if(member[members[i]].isMember 
-        && member[members[i]].salary > 0 
-        && !tokenPayments[tokenPayments.length -1].beenPaid[members[i]]){
-        tokenPayments[tokenPayments.length -1].beenPaid[members[i]] = true;
-        tokens[members[i]] += member[members[i]].salary;
-        amountPaid += member[members[i]].salary;
-        TokenPaymentLog(msg.sender, members[i], now, member[members[i]].salary);
-      }
-    }
-    tokenSupply += amountPaid;
-    tokenPayments[tokenPayments.length - 1].lastEndIndex = end;
-    tokenPayments[tokenPayments.length -1].amountPaid += amountPaid;
-
-    if(tokenPayments[tokenPayments.length - 1].lastEndIndex == members.length){
-      tokenPayments[tokenPayments.length - 1].allPaid = true;
-    }
-    return true;
-  }
 
 }
