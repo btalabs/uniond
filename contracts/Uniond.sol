@@ -100,7 +100,7 @@ contract Uniond {
       member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 0, 0, 0);
       members.push(msg.sender);
       tokenPayments.push(TokenPayments(0, 0, 0, true));
-      constitution[0] = 1; //minSignatures
+      constitution[0] = 1; //minSignaturesForSpend
       constitution[1] = 2419200; //electionDuration
       constitution[2] = 50; //electionWinThreshold
       constitution[3] = 31536000; //mandateDuration
@@ -113,19 +113,25 @@ contract Uniond {
   }
 
   modifier onlyMemberAdmin {
-      if (member[msg.sender].isApproved && member[msg.sender].isMemberAdmin && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
+      if (member[msg.sender].isApproved 
+        && member[msg.sender].isMemberAdmin 
+        && (now - member[msg.sender].electedMemberAdminDate) < constitution[3]) {
         _
       }
   }
 
   modifier onlyTreasurer {
-      if (member[msg.sender].isApproved && member[msg.sender].isTreasurer && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
+      if (member[msg.sender].isApproved 
+        && member[msg.sender].isTreasurer 
+        && (now - member[msg.sender].electedTreasurerDate) < constitution[3]) {
         _
       }
   }
 
   modifier onlyMember {
-      if (member[msg.sender].isApproved && member[msg.sender].isMember && (now - member[msg.sender].renewalDate) < constitution[6]) {
+      if (member[msg.sender].isApproved 
+        && member[msg.sender].isMember 
+        && (now - member[msg.sender].renewalDate) < constitution[6]) {
         _
       }
   }
@@ -144,7 +150,8 @@ contract Uniond {
     if(start == 0){
       memberReviews.push(MemberReview(now, 0, 0));
     }
-    if(start > 0 && memberReviews[memberReviews.length -1].lastEndIndex != start){
+    if(start > 0 
+      && memberReviews[memberReviews.length -1].lastEndIndex != start){
       return false;
     }
     for(uint i = start; i < end; i++){
@@ -176,7 +183,8 @@ contract Uniond {
   /// @param election which election they are voting on
   /// @return success if their vote was cast
   function voteElection(uint election) onlyMember returns (bool success){
-      if(now < elections[election].deadline && !elections[election].hasVoted[msg.sender]){
+      if(now < elections[election].deadline 
+        && !elections[election].hasVoted[msg.sender]){
           elections[election].hasVoted[msg.sender] = true;
           elections[election].votes++;
           return true;
@@ -237,7 +245,8 @@ contract Uniond {
   /// @notice Apply to be a member - must pay joiningFee
   /// @return success if the joiningFee is paid
   function applyMember() returns (bool success){
-      if(msg.value >= constitution[5] && !member[msg.sender].exists){
+      if(msg.value >= constitution[5] 
+        && !member[msg.sender].exists){
         member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, issues.length, 0); //dont include old issues in vote count
         members.push(msg.sender);
         return true;
@@ -248,7 +257,9 @@ contract Uniond {
   /// @notice Renew existing membership
   /// @return success if the membership is renewed
   function renewMembership() returns (bool success){
-    if(msg.value >= constitution[5] && member[msg.sender].exists && member[msg.sender].isApproved){
+    if(msg.value >= constitution[5] 
+      && member[msg.sender].exists 
+      && member[msg.sender].isApproved){
       member[msg.sender].isMember = true;
       member[msg.sender].renewalDate = now;
       return true;
@@ -298,7 +309,8 @@ contract Uniond {
   /// @param amount how many votes to cast
   /// @return success if the votes are cast
   function vote(uint issue, bool approve, uint amount) onlyMember returns (bool success){
-      if(now < issues[issue].deadline && (issues.length + member[msg.sender].delegatedVotes - member[msg.sender].spentVotes) >= amount){
+      if(now < issues[issue].deadline 
+        && (issues.length + member[msg.sender].delegatedVotes - member[msg.sender].spentVotes) >= amount){
         member[msg.sender].spentVotes += amount;
         if(approve){
           issues[issue].approve += amount;
@@ -337,7 +349,8 @@ contract Uniond {
   /// @param spend to sign
   /// @return success if the signature is appended
   function signSpend(uint spend) onlyTreasurer returns (bool success){
-    if(!spends[spend].spent && !spends[spend].hasSigned[msg.sender]){
+    if(!spends[spend].spent 
+      && !spends[spend].hasSigned[msg.sender]){
       spends[spend].hasSigned[msg.sender] = true;
       spends[spend].signatures.push(msg.sender);
       return true;
@@ -350,7 +363,9 @@ contract Uniond {
   /// @param reason for the spend
   /// @return success if the spend is spent
   function executeSpend(uint spend, string reason) onlyTreasurer returns (bool success){
-    if(!spends[spend].spent && this.balance >= spends[spend].amount && spends[spend].signatures.length >= constitution[0]){
+    if(!spends[spend].spent 
+      && this.balance >= spends[spend].amount 
+      && spends[spend].signatures.length >= constitution[0]){
       spends[spend].spent = true;
       if(!spends[spend].recipient.send(spends[spend].amount)){
         throw;
@@ -379,7 +394,8 @@ contract Uniond {
   /// @param amendment which amendment they are voting on
   /// @return success if their vote was cast
   function voteAmendment(uint amendment) onlyMember returns (bool success){
-      if(now < amendments[amendment].deadline && !amendments[amendment].hasVoted[msg.sender]){
+      if(now < amendments[amendment].deadline 
+        && !amendments[amendment].hasVoted[msg.sender]){
           amendments[amendment].votes.push(msg.sender);
           amendments[amendment].hasVoted[msg.sender] = true;
           return true;
@@ -442,7 +458,9 @@ contract Uniond {
   /// @param amount to set
   /// @return success if the amount is set
   function setSalary(uint amount) returns (bool success){
-    if(constitution[7] > 0 && amount <= constitution[8] && member[msg.sender].exists){
+    if(constitution[7] > 0 
+      && amount <= constitution[8] 
+      && member[msg.sender].exists){
       member[msg.sender].salary = amount;
       return true;
     }
