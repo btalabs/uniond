@@ -3,7 +3,6 @@
 contract Uniond {
 
   uint[10] public constitution;
-
   address[] public members;
   uint public activeMembers;
   mapping(address => Member) public member;
@@ -118,7 +117,8 @@ contract Uniond {
 
   /// @notice Allow treasurer to spend UnionD funds
   /// @return payment success
-  function spendFunds(address _to, uint _amount, string _reason) onlyTreasurer returns (bool success){
+  function spendFunds(address _to, uint _amount, string _reason) onlyTreasurer 
+           returns (bool success){
     if(!_to.send(_amount)){
         throw;
       } else {
@@ -146,7 +146,8 @@ contract Uniond {
       return false;
     }
     for(uint i = start; i < end; i++){
-        if(!(memberReviews[memberReviews.length -1].reviewed[i]) && now - member[members[i]].renewalDate < constitution[6]){
+        if(!(memberReviews[memberReviews.length -1].reviewed[i]) 
+          && now - member[members[i]].renewalDate < constitution[6]){
           memberReviews[memberReviews.length -1].tempActiveMembers++;
           memberReviews[memberReviews.length -1].reviewed[i] = true;
         }
@@ -198,12 +199,15 @@ contract Uniond {
   }
 
     //positions; 1 == treasurer, 2 == memberAdmin, 3 == chair, 4 == representative 
-    // 5 == revoke treasurer, 6 == revoke memberAdmin, 7 == revoke Chair, 8 == revoke representative
+    // 5 == revoke treasurer, 6 == revoke memberAdmin, 
+    // 7 == revoke Chair, 8 == revoke representative
     /// @notice Execute the mandate of an election
     /// @param election which election is it
     /// @return success if the mandate is executed
     function executeElectionMandate(uint election) returns (bool success){
-      if(member[elections[election].nominee].exists && !elections[election].executed && callElection(election)){
+      if(member[elections[election].nominee].exists 
+        && !elections[election].executed 
+        && callElection(election)){
         address nominee = elections[election].nominee;
         if(elections[election].role == 1){
           //add treasurer
@@ -238,7 +242,8 @@ contract Uniond {
   function applyMember() returns (bool success){
       if(msg.value >= constitution[5] 
         && !member[msg.sender].exists){
-        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, issues.length, 0); //dont include old issues in vote count
+        //dont include old issues in vote count
+        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, issues.length, 0); 
         members.push(msg.sender);
         return true;
       }
