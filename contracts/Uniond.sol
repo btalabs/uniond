@@ -1,4 +1,5 @@
 /// WARNING: not ready for deployment
+pragma solidity ^0.4.0;
 
 contract Uniond {
 
@@ -26,7 +27,6 @@ contract Uniond {
   mapping(address => uint) public tokens;
   
   Issue[] public issues;
-  Spend[] public spends;
   Election[] public elections;
   Amendment[] public amendments;
   MemberReview[] memberReviews;
