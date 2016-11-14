@@ -1,4 +1,3 @@
-/// WARNING: not ready for deployment
 pragma solidity ^0.4.0;
 
 contract Uniond {
@@ -68,11 +67,10 @@ contract Uniond {
   }
 
   event PaymentLog(address spender, address recipient, string reason, uint amount, uint date);
-  //event NewMemberLog();
-  //event NewElectionLog();
-  //event NewAmendmentLog();
-  //event NewIssueLog();
-  //event SalaryAdjustmentLog();
+  event NewMemberLog(address newMember, address memberAdmin, uint date);
+  event NewElectionLog(address member, address nominee, uint position, uint date, uint index);
+  event NewAmendmentLog(address member, uint clause, uint newValue, uint date, uint index);
+  event NewIssueLog(address member, string description, uint date, uint index);
 
   //constructor
   function Uniond(){
@@ -89,6 +87,7 @@ contract Uniond {
       constitution[8] = 1000; //salaryCap
       constitution[9] = 86400; //salaryPeriod
       tokens[msg.sender] = 1000000; //initialTokens
+      tokenSupply = tokens[msg.sender]; //set initial token supply
   }
 
   modifier onlyMemberAdmin {
@@ -166,8 +165,8 @@ contract Uniond {
   function addElection(address nominee, uint position) onlyMember returns (bool success){
       uint duration = constitution[1];
       uint deadline = now + duration;
-      //address[] memory votes;
       elections.push(Election(msg.sender, nominee, position, deadline, false, 0));
+      NewElectionLog(msg.sender, nominee, position, now, elections.length);
       return true;
   }
 
@@ -271,6 +270,7 @@ contract Uniond {
       if(member[newMember].exists){
         member[newMember].isApproved = true;
         member[newMember].isMember = true;
+        NewMemberLog(newMember, msg.sender, now);
         return true;
       }
       return false;
@@ -296,6 +296,7 @@ contract Uniond {
   /// @return success if the issue is set
   function addIssue(string description, uint deadline) onlyMember returns (bool success){
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
+      NewIssueLog(msg.sender, description, now, issues.length);
       return true;
   }
 
@@ -341,6 +342,7 @@ contract Uniond {
     uint deadline = now + duration;
     address[] memory votes;
     amendments.push(Amendment(reason, clause, value, deadline, false, votes));
+    NewAmendmentLog(msg.sender, clause, value, now, amendments.length);
     return true;
   }
 
