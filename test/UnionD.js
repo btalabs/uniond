@@ -43,5 +43,16 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   });
 
+  it("should be able to create an issue", function(done) {
+    let uniond = Uniond.deployed();
+    uniond.addIssue("test").then((result) => {
+      return uniond.vote(0, true, 1, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.issues(0);
+    }).then((result) => {
+      assert.equal(result[3].toNumber(), 1, "vote approve not 1");
+    }).then(done).catch(done);
+  })
+
 
 });

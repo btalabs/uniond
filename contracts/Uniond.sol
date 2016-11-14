@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 contract Uniond {
 
-  uint[10] public constitution;
+  uint[11] public constitution;
   address[] public members;
   uint public activeMembers;
   mapping(address => Member) public member;
@@ -86,6 +86,7 @@ contract Uniond {
       constitution[7] = 1; //canSetSalary
       constitution[8] = 1000; //salaryCap
       constitution[9] = 86400; //salaryPeriod
+      constitution[10] = 2419200; //issue duration
       tokens[msg.sender] = 1000000; //initialTokens
       tokenSupply = tokens[msg.sender]; //set initial token supply
   }
@@ -292,9 +293,9 @@ contract Uniond {
 
   /// @notice create new issue, all members get a vote
   /// @param description what the issue is about
-  /// @param deadline when the issue is called
   /// @return success if the issue is set
-  function addIssue(string description, uint deadline) onlyMember returns (bool success){
+  function addIssue(string description) onlyMember returns (bool success){
+      uint deadline = now + constitution[10];
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
       NewIssueLog(msg.sender, description, now, issues.length);
       return true;
