@@ -238,7 +238,7 @@ contract Uniond {
 
   /// @notice Apply to be a member - must pay joiningFee
   /// @return success if the joiningFee is paid
-  function applyMember() returns (bool success){
+  function applyMember() payable returns (bool success){
       if(msg.value >= constitution[5] 
         && !member[msg.sender].exists){
         //dont include old issues in vote count
@@ -376,7 +376,8 @@ contract Uniond {
   /// @param amendment which to execute
   /// @return success if amendment is executed
   function executeAmendmentMandate(uint amendment) returns (bool success){
-      if(!amendments[amendment].executed && callAmendment(amendment)){
+      if(!amendments[amendment].executed 
+        && callAmendment(amendment)){
         constitution[amendments[amendment].clause] = amendments[amendment].value;
         amendments[amendment].executed = true;
         return true;
