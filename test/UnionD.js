@@ -68,5 +68,11 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should be able to get Uniond balance", function(done) {
+    let uniond = Uniond.deployed();
+    uniond.unionBalance().then((result) => {
+      assert.equal(result.toNumber(), 1000, "uniond balance not correct");
+    }).then(done).catch(done);
+  })
 
 });
