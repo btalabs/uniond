@@ -97,4 +97,19 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should be able to pass an ammendment", function(done) {
+    let uniond = Uniond.deployed();
+    uniond.newAmendment("test", 2, 55, {from: accounts[0]}).then((result) => {
+      return uniond.voteAmendment(0, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.voteAmendment(0, {from: accounts[1]});
+    }).then((result) => {
+      return uniond.executeAmendmentMandate(0);
+    }).then((result) => {
+      return uniond.constitution(2);
+    }).then((result) => {
+      assert.equal(result.toNumber(), 55, "amendment not passed");
+    }).then(done).catch(done);
+  })
+
 });
