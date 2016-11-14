@@ -54,5 +54,19 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should be able to transfer votes to a proxy", function(done) {
+    let uniond = Uniond.deployed();
+    uniond.transferVotes(accounts[0], 1, {from: accounts[1]}).then((result) => {
+      return uniond.member(accounts[0]);
+    }).then((result) => {
+      assert.equal(result[result.length -1].toNumber(), 1, "vote not transferred");
+      return uniond.vote(0, true, 1, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.issues(0);
+    }).then((result) => {
+      assert.equal(result[3].toNumber(), 2, "vote approve not 2");
+    }).then(done).catch(done);
+  })
+
 
 });
