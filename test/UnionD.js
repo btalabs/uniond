@@ -75,4 +75,26 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should be able to run a general election", function(done) {
+    let uniond = Uniond.deployed();
+    //elect accounts[3] to treasurer
+    uniond.addElection(accounts[3], 1, {from: accounts[0]}).then((result) => {
+      return uniond.voteElection(0, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.voteElection(0, {from: accounts[1]});
+    }).then((result) => {
+      return uniond.reviewActiveMembers(0, 1, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.callElection.call(0);
+    }).then((result) => {
+      return uniond.applyMember({from: accounts[3], value: 1000});
+    }).then((result) => {
+      return uniond.executeElectionMandate(0);
+    }).then((result) => {
+      return uniond.member(accounts[3]);
+    }).then((result) => {
+      assert.equal(result[6], true, "accounts[3] is not a treasurer");
+    }).then(done).catch(done);
+  })
+
 });
