@@ -2,7 +2,7 @@ pragma solidity ^0.4.0;
 
 contract Uniond {
 
-  uint[11] public constitution;
+  uint[8] public constitution;
   address[] public members;
   uint public activeMembers;
   mapping(address => Member) public member;
@@ -17,7 +17,6 @@ contract Uniond {
     bool isTreasurer;
     uint electedMemberAdminDate;
     uint electedTreasurerDate;
-    uint salary;
     uint spentVotes; //numVotes = issues.length + delegatedVotes - spentVotes;
     uint delegatedVotes;
   }
@@ -74,7 +73,7 @@ contract Uniond {
 
   //constructor
   function Uniond(){
-      member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 0, 0, 0);
+      member[msg.sender] = Member(now, now, true, true, true, true, true, now, now, 0, 0);
       members.push(msg.sender);
       constitution[0] = 1; //minSignaturesForSpend
       constitution[1] = 2419200; //electionDuration
@@ -83,10 +82,7 @@ contract Uniond {
       constitution[4] = 66; //amendmentWinThreshold
       constitution[5] = 1000; //joiningFee
       constitution[6] = 31536000; //subscriptionPeriod
-      constitution[7] = 1; //canSetSalary
-      constitution[8] = 1000; //salaryCap
-      constitution[9] = 86400; //salaryPeriod
-      constitution[10] = 2419200; //issue duration
+      constitution[7] = 2419200; //issue duration
       tokens[msg.sender] = 1000000; //initialTokens
       tokenSupply = tokens[msg.sender]; //set initial token supply
   }
@@ -243,7 +239,7 @@ contract Uniond {
       if(msg.value >= constitution[5] 
         && !member[msg.sender].exists){
         //dont include old issues in vote count
-        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, 0, issues.length, 0); 
+        member[msg.sender] = Member(now, now, true, false, false, false, false, 0, 0, issues.length, 0); 
         members.push(msg.sender);
         return true;
       }
@@ -295,7 +291,7 @@ contract Uniond {
   /// @param description what the issue is about
   /// @return success if the issue is set
   function addIssue(string description) onlyMember returns (bool success){
-      uint deadline = now + constitution[10];
+      uint deadline = now + constitution[7];
       issues.push(Issue(msg.sender, description, now, 0, 0, deadline));
       NewIssueLog(msg.sender, description, now, issues.length);
       return true;
