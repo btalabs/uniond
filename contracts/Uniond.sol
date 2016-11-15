@@ -382,6 +382,12 @@ contract Uniond {
       return false;
     }
 
+  /// @notice get supply of issue votes
+  /// @return supply of votes
+  function totalVotes() constant returns (uint256 votes){
+    return (issues.length + member[msg.sender].delegatedVotes - member[msg.sender].spentVotes);
+  }
+
   /// @notice get supply of tokenSupply
   /// @return supply of tokens
   function totalSupply() constant returns (uint256 supply){

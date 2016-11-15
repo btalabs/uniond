@@ -68,6 +68,28 @@ contract('UnionD', function(accounts) {
     }).then(done).catch(done);
   })
 
+  it("should not allow member to vote more than they have votes", function(done){
+    let uniond = Uniond.deployed();
+    uniond.totalVotes({from: accounts[0]}).then((result) => {
+      assert.equal(result.toNumber(), 0, "incorrect amount of votes");
+      return uniond.addIssue("test2");
+    }).then((result) => {
+      return uniond.totalVotes({from: accounts[0]});
+    }).then((result) => {
+      assert.equal(result.toNumber(), 1, "incorrect amount of votes");
+      return uniond.vote(1, true, 1, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.totalVotes({from: accounts[0]});
+    }).then((result) => {
+      assert.equal(result.toNumber(), 0, "incorrect amount of votes");
+      return uniond.vote(1, true, 1, {from: accounts[0]});
+    }).then((result) => {
+      return uniond.issues(1);
+    }).then((result) => {
+      assert.equal(result[3].toNumber(), 1, "vote not cast");
+    }).then(done).catch(done);
+  })
+
   it("should get Uniond balance", function(done) {
     let uniond = Uniond.deployed();
     uniond.unionBalance().then((result) => {
